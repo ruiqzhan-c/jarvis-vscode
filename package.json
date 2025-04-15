@@ -18,7 +18,13 @@
         "name": "jarvis",
         "fullName": "Jarvis",
         "description": "What would you like to do?",
-        "isSticky": true
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "cisco",
+            "description": "Talk about Cisco."
+          }
+        ]
       }
     ],
     "commands": [

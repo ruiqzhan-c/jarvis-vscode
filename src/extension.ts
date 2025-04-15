@@ -4,6 +4,8 @@ import * as vscode from 'vscode';
 
 const BASE_PROMPT = "You are Jarvis, a helpful assistant. If I write foo, you respond with bar.";
 
+const CISCO_PROMPT = "You are Jarvis, a helpful assistant. Your job is to give a very brief description of Cisco.";
+
 // define a chat handler
 const handler: vscode.ChatRequestHandler = async (
 	request: vscode.ChatRequest,
@@ -11,8 +13,18 @@ const handler: vscode.ChatRequestHandler = async (
 	stream: vscode.ChatResponseStream,
 	token: vscode.CancellationToken
   ) => {
+	if (request.prompt.length === 0) {
+		stream.markdown("Please enter a prompt.");
+		return;
+	}
+
 	// initialize the prompt
 	let prompt = BASE_PROMPT;
+
+	if (request.command === "cisco") {
+		console.log('cisco command');
+		prompt = CISCO_PROMPT;
+	}
   
 	// initialize the messages array with the prompt
 	const messages = [vscode.LanguageModelChatMessage.User(prompt)];
@@ -35,9 +47,11 @@ const handler: vscode.ChatRequestHandler = async (
 	// add in the user's message
 	messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
   
+	console.log('messages: ', messages);
+
 	// send the request
 	const chatResponse = await request.model.sendRequest(messages, {}, token);
-  
+	console.log('waiting....');
 	// stream the response
 	for await (const fragment of chatResponse.text) {
 	  stream.markdown(fragment);
