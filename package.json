@@ -1,7 +1,7 @@
 {
   "name": "jarvis",
   "displayName": "jarvis",
-  "description": "",
+  "description": "Chat extension for Jarvis, a multi-agent AI Platform Engineer",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.99.0"
