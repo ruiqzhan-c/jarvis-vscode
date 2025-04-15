@@ -60,13 +60,6 @@ const handler: vscode.ChatRequestHandler = async (
 	return;
   };
 
-// create participant
-const tutor = vscode.chat.createChatParticipant('jarvis.jarvis', handler);
-  
-// add icon to participant
-//   tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, 'tutor.jpeg');
-  
-
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -83,6 +76,10 @@ export function activate(context: vscode.ExtensionContext) {
 		// Display a message box to the user
 		vscode.window.showInformationMessage('Hello World from jarvis!');
 	});
+
+	// create participant
+	const tutor = vscode.chat.createChatParticipant('jarvis.jarvis', handler);
+	tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, 'jarvis-icon.webp');
 
 	context.subscriptions.push(disposable);
 }
