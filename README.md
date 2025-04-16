@@ -1,6 +1,8 @@
 # jarvis README
 
-This is the README for your extension "jarvis". After writing up a brief description, we recommend including the following sections.
+This is the VS Code extension for Jarvis, the multi-agent AI platform engineer developed by Outshift by Cisco. This extension allows Jarvis to join your Copilot chat as a chat participant.
+
+Try `@jarvis` in the Copilot window to get started.
 
 ## Features
 
