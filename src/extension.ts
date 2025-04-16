@@ -1,42 +1,48 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 const BASE_PROMPT = "You are Jarvis, a helpful assistant. If I write foo, you respond with bar.";
 
 const CISCO_PROMPT = "You are Jarvis, a helpful assistant. Your job is to give a very brief description of Cisco.";
 
-// define a chat handler
+// Main chat handler for Jarvis
 const handler: vscode.ChatRequestHandler = async (
 	request: vscode.ChatRequest,
 	context: vscode.ChatContext,
 	stream: vscode.ChatResponseStream,
 	token: vscode.CancellationToken
   ) => {
+
+	// Handles case where Jarvis is @ed but no prompt is given
 	if (request.prompt.length === 0) {
+		console.log("no prompt received");
 		stream.markdown("Please enter a prompt.");
 		return;
 	}
 
-	// initialize the prompt
 	let prompt = BASE_PROMPT;
 
-	if (request.command === "cisco") {
-		console.log('cisco command');
-		prompt = CISCO_PROMPT;
+	// Check if the request is a command and set the prompt accordingly
+	switch (request.command) {
+
+		case "cisco":
+			console.log("command: cisco");
+			prompt = CISCO_PROMPT;
+			break;
+
+		default:
+			console.log("command: none");
 	}
   
-	// initialize the messages array with the prompt
+	// Initialise messages with base prompt
 	const messages = [vscode.LanguageModelChatMessage.User(prompt)];
 
-	// get all the previous participant messages
+	// Get all previous participant messages
 	const previousMessages = context.history.filter(
 		h => h instanceof vscode.ChatResponseTurn
 	);
 
-	// add the previous messages to the messages array
 	previousMessages.forEach(m => {
-		let fullMessage = '';
+		let fullMessage = "";
 		m.response.forEach(r => {
 		  const mdPart = r as vscode.ChatResponseMarkdownPart;
 		  fullMessage += mdPart.value.value;
@@ -44,45 +50,29 @@ const handler: vscode.ChatRequestHandler = async (
 		messages.push(vscode.LanguageModelChatMessage.Assistant(fullMessage));
 	  });
   
-	// add in the user's message
 	messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
-  
-	console.log('messages: ', messages);
 
-	// send the request
 	const chatResponse = await request.model.sendRequest(messages, {}, token);
-	console.log('waiting....');
-	// stream the response
+
 	for await (const fragment of chatResponse.text) {
 	  stream.markdown(fragment);
 	}
-	console.log('responding...');
-	return;
   };
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "jarvis" is now active!');
+	console.log("extension Jarvis is now active...");
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('jarvis.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from jarvis!');
+	// Placeholder command
+	const disposable = vscode.commands.registerCommand("jarvis.hello", () => {
+		vscode.window.showInformationMessage("Jarvis says hi!");
 	});
-
-	// create participant
-	const tutor = vscode.chat.createChatParticipant('jarvis.jarvis', handler);
-	tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, 'jarvis-icon.webp');
-
 	context.subscriptions.push(disposable);
+
+	// Jarvis chat participant
+	const tutor = vscode.chat.createChatParticipant("jarvis.jarvis", handler);
+	tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, "jarvis-icon.webp");
+
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {}

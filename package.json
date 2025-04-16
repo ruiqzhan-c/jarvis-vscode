@@ -29,8 +29,8 @@
     ],
     "commands": [
       {
-        "command": "jarvis.helloWorld",
-        "title": "Hello World"
+        "command": "jarvis.hello",
+        "title": "Hello Jarvis"
       }
     ]
   },
