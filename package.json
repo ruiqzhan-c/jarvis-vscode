@@ -23,6 +23,18 @@
           {
             "name": "cisco",
             "description": "Talk about Cisco."
+          },
+          {
+            "name": "capabilities",
+            "description": "What are your capabilities?"
+          },
+          {
+            "name": "jira",
+            "description": "Talk about Jira."
+          },
+          {
+            "name": "triage",
+            "description": "Check who is currently on duty."
           }
         ]
       }
@@ -33,7 +45,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "pretest": "npm run compile && npm run check",
     "lint": "eslint src",
     "prettier": "npx prettier --check src",
     "check": "npm run lint && npm run prettier",

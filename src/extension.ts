@@ -3,8 +3,7 @@ import * as vscode from "vscode";
 const BASE_PROMPT =
   "You are Jarvis, a helpful assistant. If I write foo, you respond with bar.";
 
-const CISCO_PROMPT =
-  "You are Jarvis, a helpful assistant. Your job is to give a very brief description of Cisco.";
+const CISCO_PROMPT = "Give a very brief description of Cisco.";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("extension Jarvis is now active...");
@@ -23,17 +22,38 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
 
+    console.log({
+      "command": request.command,
+      "prompt": request.prompt,
+    });
+
     let prompt = BASE_PROMPT;
 
     // Check if the request is a command and set the prompt accordingly
     switch (request.command) {
-      case "cisco":
-        console.log("command: cisco");
+      case "cisco": {
         prompt = CISCO_PROMPT;
-        break;
+        const chatResponse = await request.model.sendRequest([vscode.LanguageModelChatMessage.User(prompt)], {}, token);
+        for await (const fragment of chatResponse.text) {
+          stream.markdown(fragment);
+        }
+        return;
+      }
 
-      default:
-        console.log("command: none");
+      case "capabilities": {
+        console.error("NOT IMPLEMENTED: capabilities");
+        break;
+      }
+
+      case "jira": {
+        console.error("NOT IMPLEMENTED: jira");
+        break;
+      }
+
+      case "triage": {
+        console.error("NOT IMPLEMENTED: triage");
+        break;
+      }
     }
 
     // Initialise messages with base prompt
