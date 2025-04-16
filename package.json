@@ -35,6 +35,9 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
+    "prettier": "npx prettier --check src",
+    "check": "npm run lint && npm run prettier",
+    "format": "npx prettier --write src",
     "test": "vscode-test"
   },
   "devDependencies": {
