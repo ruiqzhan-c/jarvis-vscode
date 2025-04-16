@@ -27,12 +27,7 @@
         ]
       }
     ],
-    "commands": [
-      {
-        "command": "jarvis.hello",
-        "title": "Hello Jarvis"
-      }
-    ]
+    "commands": []
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
