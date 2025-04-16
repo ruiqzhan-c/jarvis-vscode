@@ -1,17 +1,18 @@
 import * as vscode from "vscode";
 
-const BASE_PROMPT = "You are Jarvis, a helpful assistant. If I write foo, you respond with bar.";
+const BASE_PROMPT =
+  "You are Jarvis, a helpful assistant. If I write foo, you respond with bar.";
 
-const CISCO_PROMPT = "You are Jarvis, a helpful assistant. Your job is to give a very brief description of Cisco.";
+const CISCO_PROMPT =
+  "You are Jarvis, a helpful assistant. Your job is to give a very brief description of Cisco.";
 
 // Main chat handler for Jarvis
 const handler: vscode.ChatRequestHandler = async (
   request: vscode.ChatRequest,
   context: vscode.ChatContext,
   stream: vscode.ChatResponseStream,
-  token: vscode.CancellationToken
+  token: vscode.CancellationToken,
 ) => {
-
   // Handles case where Jarvis is @ed but no prompt is given
   if (request.prompt.length === 0) {
     console.log("no prompt received");
@@ -23,7 +24,6 @@ const handler: vscode.ChatRequestHandler = async (
 
   // Check if the request is a command and set the prompt accordingly
   switch (request.command) {
-
     case "cisco":
       console.log("command: cisco");
       prompt = CISCO_PROMPT;
@@ -38,12 +38,12 @@ const handler: vscode.ChatRequestHandler = async (
 
   // Get all previous participant messages
   const previousMessages = context.history.filter(
-    h => h instanceof vscode.ChatResponseTurn
+    (h) => h instanceof vscode.ChatResponseTurn,
   );
 
-  previousMessages.forEach(m => {
+  previousMessages.forEach((m) => {
     let fullMessage = "";
-    m.response.forEach(r => {
+    m.response.forEach((r) => {
       const mdPart = r as vscode.ChatResponseMarkdownPart;
       fullMessage += mdPart.value.value;
     });
@@ -60,7 +60,6 @@ const handler: vscode.ChatRequestHandler = async (
 };
 
 export function activate(context: vscode.ExtensionContext) {
-
   console.log("extension Jarvis is now active...");
 
   // Placeholder command
@@ -71,8 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Jarvis chat participant
   const tutor = vscode.chat.createChatParticipant("jarvis.jarvis", handler);
-  tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, "jarvis-icon.webp");
-
+  tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, "icon.webp");
 }
 
 export function deactivate() {
