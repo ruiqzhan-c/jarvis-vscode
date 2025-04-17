@@ -1,70 +1,9 @@
 import * as vscode from "vscode";
-
-const BASE_PROMPT =
-  "You are Jarvis, a helpful assistant. If I write foo, you respond with bar.";
-
-const CISCO_PROMPT =
-  "You are Jarvis, a helpful assistant. Your job is to give a very brief description of Cisco.";
+import { registerJarvisParticipant } from "./jarvis";
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("extension Jarvis is now active...");
-
-  // Main chat handler for Jarvis
-  const handler: vscode.ChatRequestHandler = async (
-    request: vscode.ChatRequest,
-    context: vscode.ChatContext,
-    stream: vscode.ChatResponseStream,
-    token: vscode.CancellationToken,
-  ) => {
-    // Handles case where Jarvis is @ed but no prompt is given
-    if (request.prompt.length === 0) {
-      console.log("no prompt received");
-      stream.markdown("Please enter a prompt.");
-      return;
-    }
-
-    let prompt = BASE_PROMPT;
-
-    // Check if the request is a command and set the prompt accordingly
-    switch (request.command) {
-      case "cisco":
-        console.log("command: cisco");
-        prompt = CISCO_PROMPT;
-        break;
-
-      default:
-        console.log("command: none");
-    }
-
-    // Initialise messages with base prompt
-    const messages = [vscode.LanguageModelChatMessage.User(prompt)];
-
-    // Get all previous participant messages
-    const previousMessages = context.history.filter(
-      (h) => h instanceof vscode.ChatResponseTurn,
-    );
-
-    previousMessages.forEach((m) => {
-      let fullMessage = "";
-      m.response.forEach((r) => {
-        const mdPart = r as vscode.ChatResponseMarkdownPart;
-        fullMessage += mdPart.value.value;
-      });
-      messages.push(vscode.LanguageModelChatMessage.Assistant(fullMessage));
-    });
-
-    messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
-
-    const chatResponse = await request.model.sendRequest(messages, {}, token);
-
-    for await (const fragment of chatResponse.text) {
-      stream.markdown(fragment);
-    }
-  };
-
-  // Jarvis chat participant
-  const tutor = vscode.chat.createChatParticipant("jarvis.jarvis", handler);
-  tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, "icon.webp");
+  registerJarvisParticipant(context);
+  console.log("extension Jarvis is now activated...");
 }
 
 export function deactivate() {
