@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import options from "./options";
+import { options, optionsMap } from "./options";
 
 const BASE_PROMPT =
   "You are Jarvis, a helpful assistant. If I write foo, you respond with bar.";
@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Check if the request is a command and set the prompt accordingly
     switch (request.command) {
-      case "cisco": {
+      case options.CISCO: {
         prompt = CISCO_PROMPT;
         const chatResponse = await request.model.sendRequest([vscode.LanguageModelChatMessage.User(prompt)], {}, token);
         for await (const fragment of chatResponse.text) {
@@ -35,9 +35,9 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      case "options": {
+      case options.OPTIONS: {
         stream.markdown("Here are some of the things I can do for you:\n");
-        for (const [key, value] of options) {
+        for (const [key, value] of optionsMap) {
           stream.markdown(`- **${key}**: ${value}\n`);
           // stream.button({
           //   title: `Run ${key}`,
@@ -47,12 +47,12 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      case "jira": {
+      case options.JIRA: {
         console.error("NOT IMPLEMENTED: jira");
         break;
       }
 
-      case "triage": {
+      case options.TRIAGE: {
         console.error("NOT IMPLEMENTED: triage");
         break;
       }
