@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import options from "./options";
 
 const BASE_PROMPT =
   "You are Jarvis, a helpful assistant. If I write foo, you respond with bar.";
@@ -34,9 +35,12 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      case "capabilities": {
-        console.error("NOT IMPLEMENTED: capabilities");
-        break;
+      case "options": {
+        stream.markdown("Here are some of the things I can do for you:");
+        for (const [key, value] of options) {
+          stream.markdown(`- **${key}**: ${value}\n`);
+        }
+        return;
       }
 
       case "jira": {

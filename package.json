@@ -22,11 +22,11 @@
         "commands": [
           {
             "name": "cisco",
-            "description": "Talk about Cisco."
+            "description": "Tell me about Cisco."
           },
           {
-            "name": "capabilities",
-            "description": "What are your capabilities?"
+            "name": "options",
+            "description": "What can you do?"
           },
           {
             "name": "jira",
