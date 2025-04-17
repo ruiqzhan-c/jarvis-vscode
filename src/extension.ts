@@ -36,9 +36,13 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       case "options": {
-        stream.markdown("Here are some of the things I can do for you:");
+        stream.markdown("Here are some of the things I can do for you:\n");
         for (const [key, value] of options) {
           stream.markdown(`- **${key}**: ${value}\n`);
+          // stream.button({
+          //   title: `Run ${key}`,
+          //   command: "jarvis.run",
+          // })
         }
         return;
       }
@@ -88,8 +92,19 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // Jarvis chat participant
-  const tutor = vscode.chat.createChatParticipant("jarvis.jarvis", handler);
-  tutor.iconPath = vscode.Uri.joinPath(context.extensionUri, "icon.webp");
+  const jarvis = vscode.chat.createChatParticipant("jarvis.jarvis", handler);
+  jarvis.iconPath = vscode.Uri.joinPath(context.extensionUri, "icon.webp");
+  jarvis.followupProvider = {
+    provideFollowups(result: vscode.ChatResult, _context: vscode.ChatContext, _token: vscode.CancellationToken) {
+      if (result.metadata!.command === "options") {
+        return [{
+          prompt: 'let us play',
+          label: vscode.l10n.t('Play with the cat')
+        } satisfies vscode.ChatFollowup];
+      }
+    }
+};
+
 }
 
 export function deactivate() {
