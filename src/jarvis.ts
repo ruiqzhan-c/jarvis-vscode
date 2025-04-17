@@ -7,7 +7,7 @@ const PARTICIPANT_ID = "jarvis.jarvis";
 interface JarvisChatResult extends vscode.ChatResult {
   metadata: {
     command: string;
-  }
+  };
 }
 
 export function registerJarvisParticipant(context: vscode.ExtensionContext) {
