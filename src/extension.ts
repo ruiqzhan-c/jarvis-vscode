@@ -15,13 +15,6 @@ export function activate(context: vscode.ExtensionContext) {
     stream: vscode.ChatResponseStream,
     token: vscode.CancellationToken,
   ) => {
-    // Handles case where Jarvis is @ed but no prompt is given
-    if (request.prompt.length === 0) {
-      console.log("no prompt received");
-      stream.markdown("Please enter a prompt.");
-      return;
-    }
-
     console.log({
       "command": request.command,
       "prompt": request.prompt,
@@ -37,6 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
         for await (const fragment of chatResponse.text) {
           stream.markdown(fragment);
         }
+        stream.markdown("\n\n<https://www.cisco.com/>");
         return;
       }
 
@@ -54,6 +48,13 @@ export function activate(context: vscode.ExtensionContext) {
         console.error("NOT IMPLEMENTED: triage");
         break;
       }
+    }
+
+    // Handles case where Jarvis is @ed but no prompt is given
+    if (request.prompt.length === 0) {
+      console.log("no prompt received");
+      stream.markdown("Please enter a prompt.");
+      return;
     }
 
     // Initialise messages with base prompt
