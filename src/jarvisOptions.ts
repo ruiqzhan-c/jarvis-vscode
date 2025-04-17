@@ -5,6 +5,7 @@ export enum options {
   TRIAGE = "triage",
 }
 
+// Map of options to their descriptions
 export const optionsMap = new Map<string, string>([
   [options.CISCO, "Give a very brief description of Cisco."],
   [options.OPTIONS, "List the capabilities of Jarvis."],

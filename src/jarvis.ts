@@ -11,6 +11,11 @@ interface JarvisChatResult extends vscode.ChatResult {
   };
 }
 
+/**
+ * Registers the Jarvis chat participant with the given context.
+ * 
+ * @param context vscode extension context
+ */
 export function registerJarvisParticipant(context: vscode.ExtensionContext) {
   // Main chat handler for Jarvis
   const handler: vscode.ChatRequestHandler = async (
@@ -24,33 +29,18 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
       prompt: request.prompt,
     });
 
-    let prompt = await renderPrompt(
+    const prompt = await renderPrompt(
       BasePrompt,
       {},
       { modelMaxPromptTokens: request.model.maxInputTokens },
       request.model,
     );
 
-    // Check if the request is a command and set the prompt accordingly
+    // Check if the request is a command and handle it accordingly
     switch (request.command) {
-      case options.CISCO: {
-        prompt = await renderPrompt(
-          CiscoPrompt,
-          {},
-          { modelMaxPromptTokens: request.model.maxInputTokens },
-          request.model,
-        );
-        const chatResponse = await request.model.sendRequest(
-          prompt.messages,
-          {},
-          token,
-        );
-        for await (const fragment of chatResponse.text) {
-          stream.markdown(fragment);
-        }
-        stream.markdown("\n\n<https://www.cisco.com/>");
+      case options.CISCO:
+        await ciscoHandler(request, context, stream, token);
         return;
-      }
 
       case options.OPTIONS: {
         stream.markdown("Here are some of the things I can do for you:\n");
@@ -129,5 +119,42 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
     },
   };
 
-  console.log("extension Jarvis is now active...");
+  console.log("participant Jarvis has been registered...");
+}
+
+/**
+ * Handles the cisco command, providing a brief description of Cisco.
+ * 
+ * @param request 
+ * @param _context 
+ * @param stream 
+ * @param token 
+ */
+async function ciscoHandler(
+  request: vscode.ChatRequest,
+  _context: vscode.ChatContext,
+  stream: vscode.ChatResponseStream,
+  token: vscode.CancellationToken,
+) {
+  stream.progress("Fetching data on Cisco...");
+  
+  // Construct the prompt for Cisco command
+  const prompt = await renderPrompt(
+    CiscoPrompt,
+    {},
+    { modelMaxPromptTokens: request.model.maxInputTokens },
+    request.model,
+  );
+
+  // Get GPT response and stream it to the chat window
+  const chatResponse = await request.model.sendRequest(
+    prompt.messages,
+    {},
+    token,
+  );
+
+  for await (const fragment of chatResponse.text) {
+    stream.markdown(fragment);
+  }
+  stream.markdown("\n\n<https://www.cisco.com/>");
 }

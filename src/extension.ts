@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import { registerJarvisParticipant } from "./jarvis";
 
 export function activate(context: vscode.ExtensionContext) {
-  // Jarvis chat participant
   registerJarvisParticipant(context);
+  console.log("extension Jarvis is now activated...");
 }
 
 export function deactivate() {

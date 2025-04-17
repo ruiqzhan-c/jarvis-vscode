@@ -3,6 +3,7 @@ import {
   BasePromptElementProps,
   PromptElement,
   PromptSizing,
+  UserMessage,
 } from "@vscode/prompt-tsx";
 
 export interface PromptProps extends BasePromptElementProps {
@@ -32,9 +33,9 @@ export class CiscoPrompt extends PromptElement<PromptProps, void> {
   async render(_state: void, _sizing: PromptSizing) {
     return (
       <>
-        <AssistantMessage>
+        <UserMessage>
           Give a very brief description of Cisco.
-        </AssistantMessage>
+        </UserMessage>
       </>
     );
   }
