@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { options, optionsMap } from "./jarvisOptions";
-import { BASE_PROMPT, CISCO_PROMPT } from "./prompts";
+import { BasePrompt, CiscoPrompt } from "./prompts";
+import { renderPrompt } from "@vscode/prompt-tsx";
 
 const PARTICIPANT_ID = "jarvis.jarvis";
 
@@ -23,14 +24,24 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
       prompt: request.prompt,
     });
 
-    let prompt = BASE_PROMPT;
+    let prompt = await renderPrompt(
+      BasePrompt,
+      {},
+      { modelMaxPromptTokens: request.model.maxInputTokens },
+      request.model,
+    );
 
     // Check if the request is a command and set the prompt accordingly
     switch (request.command) {
       case options.CISCO: {
-        prompt = CISCO_PROMPT;
+        prompt = await renderPrompt(
+          CiscoPrompt,
+          {},
+          { modelMaxPromptTokens: request.model.maxInputTokens },
+          request.model,
+        );
         const chatResponse = await request.model.sendRequest(
-          [vscode.LanguageModelChatMessage.User(prompt)],
+          prompt.messages,
           {},
           token,
         );
@@ -72,7 +83,7 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
     }
 
     // Initialise messages with base prompt
-    const messages = [vscode.LanguageModelChatMessage.User(prompt)];
+    const messages = prompt.messages;
 
     // Get all previous participant messages
     const previousMessages = context.history.filter(
