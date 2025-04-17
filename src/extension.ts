@@ -17,8 +17,8 @@ export function activate(context: vscode.ExtensionContext) {
     token: vscode.CancellationToken,
   ) => {
     console.log({
-      "command": request.command,
-      "prompt": request.prompt,
+      command: request.command,
+      prompt: request.prompt,
     });
 
     let prompt = BASE_PROMPT;
@@ -27,7 +27,11 @@ export function activate(context: vscode.ExtensionContext) {
     switch (request.command) {
       case options.CISCO: {
         prompt = CISCO_PROMPT;
-        const chatResponse = await request.model.sendRequest([vscode.LanguageModelChatMessage.User(prompt)], {}, token);
+        const chatResponse = await request.model.sendRequest(
+          [vscode.LanguageModelChatMessage.User(prompt)],
+          {},
+          token,
+        );
         for await (const fragment of chatResponse.text) {
           stream.markdown(fragment);
         }
@@ -95,16 +99,21 @@ export function activate(context: vscode.ExtensionContext) {
   const jarvis = vscode.chat.createChatParticipant("jarvis.jarvis", handler);
   jarvis.iconPath = vscode.Uri.joinPath(context.extensionUri, "icon.webp");
   jarvis.followupProvider = {
-    provideFollowups(result: vscode.ChatResult, _context: vscode.ChatContext, _token: vscode.CancellationToken) {
+    provideFollowups(
+      result: vscode.ChatResult,
+      _context: vscode.ChatContext,
+      _token: vscode.CancellationToken,
+    ) {
       if (result.metadata!.command === "options") {
-        return [{
-          prompt: 'let us play',
-          label: vscode.l10n.t('Play with the cat')
-        } satisfies vscode.ChatFollowup];
+        return [
+          {
+            prompt: "let us play",
+            label: vscode.l10n.t("Play with the cat"),
+          } satisfies vscode.ChatFollowup,
+        ];
       }
-    }
-};
-
+    },
+  };
 }
 
 export function deactivate() {
