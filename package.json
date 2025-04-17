@@ -36,6 +36,10 @@
           {
             "name": "triage",
             "description": "Check who is currently on duty."
+          },
+          {
+            "name": "health",
+            "description": "Debug tool for API connection check."
           }
         ]
       }
@@ -47,7 +51,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run check",
-    "lint": "eslint src",
+    "lint": "eslint .",
     "prettier": "npx prettier --check src",
     "check": "npm run lint && npm run prettier",
     "format": "npx prettier --write src",
@@ -69,6 +73,7 @@
     "typescript-eslint": "^8.30.1"
   },
   "dependencies": {
-    "@vscode/prompt-tsx": "^0.3.0-alpha.24"
+    "@vscode/prompt-tsx": "^0.3.0-alpha.24",
+    "dotenv": "^16.5.0"
   }
 }

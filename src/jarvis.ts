@@ -1,9 +1,18 @@
 import * as vscode from "vscode";
+import * as dotenv from "dotenv";
+import * as http from "http";
 import { options, optionsMap } from "./jarvisOptions";
 import { BasePrompt, CiscoPrompt } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
 
+dotenv.config();
+
 const PARTICIPANT_ID = "jarvis.jarvis";
+
+// Jarvis API configuration
+const JARVIS_PORT = process.env.JARVIS_PORT || "8000";
+const JARVIS_HOST = process.env.JARVIS_HOST || "localhost";
+const JARVIS_URL = `http://${JARVIS_HOST}:${JARVIS_PORT}/`;
 
 interface JarvisChatResult extends vscode.ChatResult {
   metadata: {
@@ -62,6 +71,13 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
       case options.TRIAGE: {
         console.error("NOT IMPLEMENTED: triage");
         break;
+      }
+
+      case options.HEALTH: {
+        const health = http.get(JARVIS_URL + "healthz");
+        console.log(health.getHeaders());
+        stream.markdown("check console");
+        return;
       }
     }
 

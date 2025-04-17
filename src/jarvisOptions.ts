@@ -3,6 +3,7 @@ export enum options {
   OPTIONS = "options",
   JIRA = "jira",
   TRIAGE = "triage",
+  HEALTH = "health",
 }
 
 // Map of options to their descriptions
@@ -11,4 +12,5 @@ export const optionsMap = new Map<string, string>([
   [options.OPTIONS, "List the capabilities of Jarvis."],
   [options.JIRA, "Create a Jira ticket for me."],
   [options.TRIAGE, "Who is currently on-call?"],
+  [options.HEALTH, "Check the API connection [DEBUG USE ONLY]."],
 ]);
