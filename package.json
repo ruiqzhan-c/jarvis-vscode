@@ -74,6 +74,7 @@
   },
   "dependencies": {
     "@vscode/prompt-tsx": "^0.3.0-alpha.24",
+    "axios": "^1.8.4",
     "dotenv": "^16.5.0"
   }
 }
