@@ -62,13 +62,6 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
         console.error("NOT IMPLEMENTED: triage");
         break;
       }
-
-      // case options.HEALTH: {
-      //   const health = http.get(JARVIS_URL + "healthz");
-      //   console.log(health.getHeaders());
-      //   stream.markdown("check console");
-      //   return;
-      // }
     }
 
     // Handles case where Jarvis is @ed but no prompt is given
