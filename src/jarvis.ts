@@ -1,19 +1,13 @@
 import * as vscode from "vscode";
 import * as dotenv from "dotenv";
-import * as http from "http";
 import { options, optionsMap } from "./jarvisOptions";
 import { BasePrompt, CiscoPrompt } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
-import { postJarvisPrompt, getJarvisResponse } from "./jarvisAgent";
+import { postJarvisPrompt, getJarvisResponseStream } from "./jarvisAgent";
 
 dotenv.config();
 
 const PARTICIPANT_ID = "jarvis.jarvis";
-
-// Jarvis API configuration
-const JARVIS_PORT = process.env.JARVIS_PORT || "8000";
-const JARVIS_HOST = process.env.JARVIS_HOST || "localhost";
-const JARVIS_URL = `http://${JARVIS_HOST}:${JARVIS_PORT}/`;
 
 interface JarvisChatResult extends vscode.ChatResult {
   metadata: {
@@ -69,12 +63,12 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
         break;
       }
 
-      case options.HEALTH: {
-        const health = http.get(JARVIS_URL + "healthz");
-        console.log(health.getHeaders());
-        stream.markdown("check console");
-        return;
-      }
+      // case options.HEALTH: {
+      //   const health = http.get(JARVIS_URL + "healthz");
+      //   console.log(health.getHeaders());
+      //   stream.markdown("check console");
+      //   return;
+      // }
     }
 
     // Handles case where Jarvis is @ed but no prompt is given
@@ -84,12 +78,29 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
       return;
     }
 
-    const chatId = "local_1234";
+    // TODO: hacky, fix in future
+    const chatId = "local_123475aadsf";
 
     await postJarvisPrompt(chatId, request.prompt);
-    const res = await getJarvisResponse(chatId);
+    // console.log(await getJarvisResponse(chatId));
+    const responseStream = await getJarvisResponseStream(chatId);
 
-    stream.markdown(res.answer);
+    for await (const chunk of responseStream) {
+      // Construct the stream chunk JSON object
+      // TODO: this is hacky, need to fix in the future
+      const [eventPart, dataPart] = chunk.toString().split(/event:\s*|\s*data:\s*/).filter(Boolean);
+      const parsedData = JSON.parse(dataPart);
+
+      const data = {
+        event: eventPart.trim(),
+        data: parsedData,
+      };
+
+      if (data.event === "data") {
+        stream.markdown(data.data.answer);
+      }
+    }
+
     return;
 
     // Initialise messages with base prompt
