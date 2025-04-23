@@ -1,7 +1,11 @@
 import * as vscode from "vscode";
+import * as dotenv from "dotenv";
 import { options, optionsMap } from "./jarvisOptions";
 import { BasePrompt, CiscoPrompt } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
+import { postJarvisPrompt, getJarvisResponseStream } from "./jarvisAgent";
+
+dotenv.config();
 
 const PARTICIPANT_ID = "jarvis.jarvis";
 
@@ -24,11 +28,13 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
     stream: vscode.ChatResponseStream,
     token: vscode.CancellationToken,
   ) => {
+    // Logging
     console.log({
       command: request.command,
       prompt: request.prompt,
     });
 
+    // Set the default base prompt
     const prompt = await renderPrompt(
       BasePrompt,
       {},
@@ -43,14 +49,7 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
         return;
 
       case options.OPTIONS: {
-        stream.markdown("Here are some of the things I can do for you:\n");
-        for (const [key, value] of optionsMap) {
-          stream.markdown(`- **${key}**: ${value}\n`);
-          // stream.button({
-          //   title: `Run ${key}`,
-          //   command: "jarvis.run",
-          // })
-        }
+        optionsHandler(stream);
         return;
       }
 
@@ -71,6 +70,31 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
       stream.markdown("Please enter a prompt.");
       return;
     }
+
+    // TODO: hacky, fix in future
+    const chatId = "local_123475aadsf";
+
+    await postJarvisPrompt(chatId, request.prompt);
+    // console.log(await getJarvisResponse(chatId));
+    const responseStream = await getJarvisResponseStream(chatId);
+
+    for await (const chunk of responseStream) {
+      // Construct the stream chunk JSON object
+      // TODO: this is hacky, need to fix in the future
+      const [eventPart, dataPart] = chunk.toString().split(/event:\s*|\s*data:\s*/).filter(Boolean);
+      const parsedData = JSON.parse(dataPart);
+
+      const data = {
+        event: eventPart.trim(),
+        data: parsedData,
+      };
+
+      if (data.event === "data") {
+        stream.markdown(data.data.answer);
+      }
+    }
+
+    return;
 
     // Initialise messages with base prompt
     const messages = prompt.messages;
@@ -126,7 +150,7 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
  * Handles the cisco command, providing a brief description of Cisco.
  * 
  * @param request 
- * @param _context 
+ * @param _context unused
  * @param stream 
  * @param token 
  */
@@ -157,4 +181,20 @@ async function ciscoHandler(
     stream.markdown(fragment);
   }
   stream.markdown("\n\n<https://www.cisco.com/>");
+}
+
+/**
+ * Streams a list of available commands to the chat window.
+ * 
+ * @param stream vscode chat response stream
+ */
+function optionsHandler(stream: vscode.ChatResponseStream) {
+  stream.markdown("Here are some of the things I can do for you:\n");
+  for (const [key, value] of optionsMap) {
+    stream.markdown(`- **${key}**: ${value}\n`);
+    // stream.button({
+    //   title: `Run ${key}`,
+    //   command: "jarvis.run",
+    // })
+  }
 }
