@@ -12,7 +12,15 @@ interface JarvisChatResponse {
   answer: string;
 }
 
+/**
+ * Posts a prompt to the Jarvis API. Await should be used to ensure the request
+ * is sent before proceeding.
+ * 
+ * @param chatId chat identifier
+ * @param prompt user prompt
+ */
 export async function postJarvisPrompt(chatId: string, prompt: string) {
+  // TODO: can make the promise return a boolean to indicate success
   await axios.post(JARVIS_URL + "/submit_question", {
     chat_id: chatId,
     question: prompt,
@@ -27,6 +35,12 @@ export async function postJarvisPrompt(chatId: string, prompt: string) {
   });
 }
 
+/**
+ * Retrieves the Jarvis chat response for a given chat ID.
+ * 
+ * @param chatId chat identifier
+ * @returns a promise that resolves to the Jarvis chat response
+ */
 export async function getJarvisResponse(chatId: string): Promise<JarvisChatResponse> {
   return await axios.get(JARVIS_URL + `/get_answer/${chatId}`, {
     headers: {
@@ -38,6 +52,12 @@ export async function getJarvisResponse(chatId: string): Promise<JarvisChatRespo
   });
 }
 
+/**
+ * Retrieves the Jarvis chat response as a stream for a given chat ID.
+ * 
+ * @param chatId chat identifier
+ * @returns a promise that resolves to a Readable stream of the Jarvis chat response
+ */
 export async function getJarvisResponseStream(chatId: string): Promise<Readable> {
   const streamResponse = await axios.get(JARVIS_URL + `/get_answer_stream/${chatId}`, {
     headers: {

@@ -1,3 +1,4 @@
+// Enum of available options for Jarvis
 export enum options {
   CISCO = "cisco",
   OPTIONS = "options",
@@ -12,5 +13,4 @@ export const optionsMap = new Map<string, string>([
   [options.OPTIONS, "List the capabilities of Jarvis."],
   [options.JIRA, "Create a Jira ticket for me."],
   [options.TRIAGE, "Who is currently on-call?"],
-  [options.HEALTH, "Check the API connection [DEBUG USE ONLY]."],
 ]);

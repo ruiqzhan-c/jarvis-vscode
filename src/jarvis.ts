@@ -39,7 +39,7 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
       // Provides a brief description of Cisco
       case options.CISCO:
         // TODO: make this set a prompt to pass to jarvis
-        await ciscoHandler(request, context, stream, token);
+        await ciscoHandler(request, stream, token);
         return;
 
       // Provides a list of available commands
@@ -146,15 +146,15 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
  * Handles the cisco command, providing a brief description of Cisco.
  * 
  * @param request 
- * @param _context unused
  * @param stream 
  * @param token 
+ * @param _context unused
  */
 async function ciscoHandler(
   request: vscode.ChatRequest,
-  _context: vscode.ChatContext,
   stream: vscode.ChatResponseStream,
   token: vscode.CancellationToken,
+  _context?: vscode.ChatContext,
 ) {
   stream.progress("Fetching data on Cisco...");
   
