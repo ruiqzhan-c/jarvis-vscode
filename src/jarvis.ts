@@ -20,7 +20,7 @@ const PARTICIPANT_ID = "jarvis.jarvis";
  * 
  * @param context vscode extension context
  */
-export function registerJarvisParticipant(context: vscode.ExtensionContext) {
+export function registerJarvisParticipant(context: vscode.ExtensionContext, chatId: string) {
   // Main chat handler for Jarvis
   const handler: vscode.ChatRequestHandler = async (
     request: vscode.ChatRequest,
@@ -65,9 +65,6 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
       stream.markdown("Please enter a prompt.");
       return;
     }
-
-    // TODO: hacky, fix in future, can add to context
-    const chatId = "local_123475aadsf";
 
     // Send the prompt to Jarvis
     await postJarvisPrompt(chatId, request.prompt);
@@ -121,6 +118,8 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
   // Register the Jarvis chat participant
   const jarvis = vscode.chat.createChatParticipant(PARTICIPANT_ID, handler);
   jarvis.iconPath = vscode.Uri.joinPath(context.extensionUri, "icon.webp");
+  
+  context.subscriptions.push(jarvis);
 
   // jarvis.followupProvider = {
   //   provideFollowups(
@@ -193,4 +192,12 @@ function optionsHandler(stream: vscode.ChatResponseStream) {
     //   command: "jarvis.run",
     // })
   }
+}
+
+/**
+ * 
+ * @returns a unique chat ID for the Jarvis chat session
+ */
+export function getChatId(): string {
+  return "local_" + crypto.randomUUID();
 }
