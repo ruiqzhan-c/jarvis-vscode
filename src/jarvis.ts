@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as dotenv from "dotenv";
 import { options, optionsMap } from "./jarvisOptions";
-import { BasePrompt, CiscoPrompt } from "./prompts";
+import { CiscoPrompt } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
 import { postJarvisPrompt, getJarvisResponseStream } from "./jarvisAgent";
 
@@ -9,11 +9,11 @@ dotenv.config();
 
 const PARTICIPANT_ID = "jarvis.jarvis";
 
-interface JarvisChatResult extends vscode.ChatResult {
-  metadata: {
-    command: string;
-  };
-}
+// interface JarvisChatResult extends vscode.ChatResult {
+//   metadata: {
+//     command: string;
+//   };
+// }
 
 /**
  * Registers the Jarvis chat participant with the given context.
@@ -34,21 +34,17 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
       prompt: request.prompt,
     });
 
-    // Set the default base prompt
-    const prompt = await renderPrompt(
-      BasePrompt,
-      {},
-      { modelMaxPromptTokens: request.model.maxInputTokens },
-      request.model,
-    );
-
     // Check if the request is a command and handle it accordingly
     switch (request.command) {
+      // Provides a brief description of Cisco
       case options.CISCO:
+        // TODO: make this set a prompt to pass to jarvis
         await ciscoHandler(request, context, stream, token);
         return;
 
+      // Provides a list of available commands
       case options.OPTIONS: {
+        // TODO: jarvis should be able to handle this
         optionsHandler(stream);
         return;
       }
@@ -64,18 +60,18 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
       }
     }
 
-    // Handles case where Jarvis is @ed but no prompt is given
+    // If Jarvis is @ed but no prompt is given, reply and do nothing
     if (request.prompt.length === 0) {
-      console.log("no prompt received");
       stream.markdown("Please enter a prompt.");
       return;
     }
 
-    // TODO: hacky, fix in future
+    // TODO: hacky, fix in future, can add to context
     const chatId = "local_123475aadsf";
 
+    // Send the prompt to Jarvis
     await postJarvisPrompt(chatId, request.prompt);
-    // console.log(await getJarvisResponse(chatId));
+
     const responseStream = await getJarvisResponseStream(chatId);
 
     for await (const chunk of responseStream) {
@@ -96,52 +92,52 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext) {
 
     return;
 
-    // Initialise messages with base prompt
-    const messages = prompt.messages;
+    // // Initialise messages with base prompt
+    // const messages = prompt.messages;
 
-    // Get all previous participant messages
-    const previousMessages = context.history.filter(
-      (h) => h instanceof vscode.ChatResponseTurn,
-    );
+    // // Get all previous participant messages
+    // const previousMessages = context.history.filter(
+    //   (h) => h instanceof vscode.ChatResponseTurn,
+    // );
 
-    previousMessages.forEach((m) => {
-      let fullMessage = "";
-      m.response.forEach((r) => {
-        const mdPart = r as vscode.ChatResponseMarkdownPart;
-        fullMessage += mdPart.value.value;
-      });
-      messages.push(vscode.LanguageModelChatMessage.Assistant(fullMessage));
-    });
+    // previousMessages.forEach((m) => {
+    //   let fullMessage = "";
+    //   m.response.forEach((r) => {
+    //     const mdPart = r as vscode.ChatResponseMarkdownPart;
+    //     fullMessage += mdPart.value.value;
+    //   });
+    //   messages.push(vscode.LanguageModelChatMessage.Assistant(fullMessage));
+    // });
 
-    messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
+    // messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
 
-    const chatResponse = await request.model.sendRequest(messages, {}, token);
+    // const chatResponse = await request.model.sendRequest(messages, {}, token);
 
-    for await (const fragment of chatResponse.text) {
-      stream.markdown(fragment);
-    }
+    // for await (const fragment of chatResponse.text) {
+    //   stream.markdown(fragment);
+    // }
   };
 
-  // Jarvis chat participant
+  // Register the Jarvis chat participant
   const jarvis = vscode.chat.createChatParticipant(PARTICIPANT_ID, handler);
   jarvis.iconPath = vscode.Uri.joinPath(context.extensionUri, "icon.webp");
 
-  jarvis.followupProvider = {
-    provideFollowups(
-      _result: JarvisChatResult,
-      _context: vscode.ChatContext,
-      _token: vscode.CancellationToken,
-    ) {
-      if (_result.metadata!.command === "options") {
-        return [
-          {
-            prompt: "let us play",
-            label: vscode.l10n.t("Play with the cat"),
-          } satisfies vscode.ChatFollowup,
-        ];
-      }
-    },
-  };
+  // jarvis.followupProvider = {
+  //   provideFollowups(
+  //     _result: JarvisChatResult,
+  //     _context: vscode.ChatContext,
+  //     _token: vscode.CancellationToken,
+  //   ) {
+  //     if (_result.metadata!.command === "options") {
+  //       return [
+  //         {
+  //           prompt: "let us play",
+  //           label: vscode.l10n.t("Play with the cat"),
+  //         } satisfies vscode.ChatFollowup,
+  //       ];
+  //     }
+  //   },
+  // };
 
   console.log("participant Jarvis has been registered...");
 }
