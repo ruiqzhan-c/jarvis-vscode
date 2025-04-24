@@ -43,3 +43,9 @@ export class CiscoPrompt extends PromptElement<PromptProps, void> {
 
 export const CISCO_PROMPT = 
   "Give a very brief description of Cisco.";
+
+export const OPTIONS_PROMPT =
+  "What can JARVIS do?";
+
+export const GITHUB_REPO_PROMPT =
+  "Create GitHub repo";

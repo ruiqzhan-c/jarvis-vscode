@@ -36,6 +36,10 @@
           {
             "name": "triage",
             "description": "Check who is currently on duty."
+          },
+          {
+            "name": "githubRepo",
+            "description": "Create a new GitHub repo."
           }
         ]
       }

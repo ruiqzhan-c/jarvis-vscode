@@ -32,7 +32,7 @@ export async function postJarvisPrompt(chatId: string, prompt: string): Promise<
   }, {
     headers: { "USER_EMAIL": USER_EMAIL }
   }).then((res) => {
-    console.log({
+    console.log("Posted:", {
       status: res.status,
       data: res.data,
     });

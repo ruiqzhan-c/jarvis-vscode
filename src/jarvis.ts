@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as dotenv from "dotenv";
 import { options, optionsMap } from "./jarvisOptions";
-import { CISCO_PROMPT, CiscoPrompt } from "./prompts";
+import { CISCO_PROMPT, GITHUB_REPO_PROMPT, OPTIONS_PROMPT } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
 import { postJarvisPrompt, getJarvisResponseStream } from "./jarvisAgent";
 import { Readable } from "stream";
@@ -48,11 +48,9 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
         break;
 
       // Provides a list of available commands
-      case options.OPTIONS: {
-        // TODO: jarvis should be able to handle this
-        optionsHandler(stream);
-        return;
-      }
+      case options.OPTIONS:
+        prompt = OPTIONS_PROMPT;
+        break;
 
       case options.JIRA: {
         console.error("NOT IMPLEMENTED: jira");
@@ -63,6 +61,11 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
         console.error("NOT IMPLEMENTED: triage");
         break;
       }
+
+      // Helps the user create a new GitHub repository
+      case options.GITHUB_REPO:
+        prompt = GITHUB_REPO_PROMPT;
+        break;
     }
 
     // If Jarvis is @ed but no prompt is given, reply and do nothing
