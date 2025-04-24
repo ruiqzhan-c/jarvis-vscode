@@ -29,62 +29,67 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
     stream: vscode.ChatResponseStream,
     _token: vscode.CancellationToken,
   ) => {
-    // Progress message to chat window
-    stream.progress("Jarvis is thinking...");
+    try {
+      // Progress message to chat window
+      stream.progress("Jarvis is thinking...");
 
-    // Logging
-    console.log("Handler: ", {
-      command: request.command,
-      prompt: request.prompt,
-    });
+      // Logging
+      console.log("Handler: ", {
+        command: request.command,
+        prompt: request.prompt,
+      });
 
-    let prompt = request.prompt;
+      let prompt = request.prompt;
 
-    // Check if the request is a command and handle it accordingly
-    switch (request.command) {
-      // Provides a brief description of Cisco
-      case options.CISCO:
-        prompt = prompts.CISCO_PROMPT;
-        break;
+      // Check if the request is a command and handle it accordingly
+      switch (request.command) {
+        // Provides a brief description of Cisco
+        case options.CISCO:
+          prompt = prompts.CISCO_PROMPT;
+          break;
 
-      // Provides a list of available commands
-      case options.OPTIONS:
-        prompt = prompts.OPTIONS_PROMPT;
-        break;
+        // Provides a list of available commands
+        case options.OPTIONS:
+          prompt = prompts.OPTIONS_PROMPT;
+          break;
 
-      case options.JIRA: {
-        console.error("NOT IMPLEMENTED: jira");
-        break;
+        case options.JIRA: {
+          console.error("NOT IMPLEMENTED: jira");
+          break;
+        }
+
+        case options.TRIAGE: {
+          console.error("NOT IMPLEMENTED: triage");
+          break;
+        }
+
+        // Helps the user create a new GitHub repository
+        case options.GITHUB_REPO:
+          prompt = prompts.GITHUB_REPO_PROMPT;
+          break;
+
+        // Gets LLM access using Ostinato
+        case options.LLM_ACCESS:
+          prompt = prompts.LLM_ACCESS_PROMPT;
+          break;
       }
 
-      case options.TRIAGE: {
-        console.error("NOT IMPLEMENTED: triage");
-        break;
+      // If Jarvis is @ed but no prompt is given, reply and do nothing
+      if (prompt.length === 0) {
+        stream.markdown("Please enter a prompt.");
+        return;
       }
 
-      // Helps the user create a new GitHub repository
-      case options.GITHUB_REPO:
-        prompt = prompts.GITHUB_REPO_PROMPT;
-        break;
+      // Send the prompt to Jarvis
+      await postJarvisPrompt(chatId, prompt);
 
-      // Gets LLM access using Ostinato
-      case options.LLM_ACCESS:
-        prompt = prompts.LLM_ACCESS_PROMPT;
-        break;
+      // Stream response to the chat window
+      const responseStream = await getJarvisResponseStream(chatId);
+      await streamJarvisResponse(stream, responseStream);
+    } catch (error) {
+      console.trace(error);
+      throw new Error("Jarvis is not available at the moment.");
     }
-
-    // If Jarvis is @ed but no prompt is given, reply and do nothing
-    if (prompt.length === 0) {
-      stream.markdown("Please enter a prompt.");
-      return;
-    }
-
-    // Send the prompt to Jarvis
-    await postJarvisPrompt(chatId, prompt);
-
-    // Stream response to the chat window
-    const responseStream = await getJarvisResponseStream(chatId);
-    await streamJarvisResponse(stream, responseStream);
   };
 
   // Register the Jarvis chat participant
