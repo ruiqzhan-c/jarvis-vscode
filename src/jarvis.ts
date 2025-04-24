@@ -73,33 +73,6 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
     // Stream response to the chat window
     const responseStream = await getJarvisResponseStream(chatId);
     await streamJarvisResponse(stream, responseStream);
-
-    return;
-
-    // // Initialise messages with base prompt
-    // const messages = prompt.messages;
-
-    // // Get all previous participant messages
-    // const previousMessages = context.history.filter(
-    //   (h) => h instanceof vscode.ChatResponseTurn,
-    // );
-
-    // previousMessages.forEach((m) => {
-    //   let fullMessage = "";
-    //   m.response.forEach((r) => {
-    //     const mdPart = r as vscode.ChatResponseMarkdownPart;
-    //     fullMessage += mdPart.value.value;
-    //   });
-    //   messages.push(vscode.LanguageModelChatMessage.Assistant(fullMessage));
-    // });
-
-    // messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
-
-    // const chatResponse = await request.model.sendRequest(messages, {}, token);
-
-    // for await (const fragment of chatResponse.text) {
-    //   stream.markdown(fragment);
-    // }
   };
 
   // Register the Jarvis chat participant
