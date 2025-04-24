@@ -40,3 +40,6 @@ export class CiscoPrompt extends PromptElement<PromptProps, void> {
     );
   }
 }
+
+export const CISCO_PROMPT = 
+  "Give a very brief description of Cisco.";
