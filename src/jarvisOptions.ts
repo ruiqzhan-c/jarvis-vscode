@@ -4,7 +4,6 @@ export enum options {
   OPTIONS = "options",
   JIRA = "jira",
   TRIAGE = "triage",
-  HEALTH = "health",
 }
 
 // Map of options to their descriptions

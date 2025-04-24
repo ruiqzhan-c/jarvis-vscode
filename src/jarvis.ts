@@ -4,6 +4,7 @@ import { options, optionsMap } from "./jarvisOptions";
 import { CiscoPrompt } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
 import { postJarvisPrompt, getJarvisResponseStream } from "./jarvisAgent";
+import { Readable } from "stream";
 
 dotenv.config();
 
@@ -29,7 +30,7 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
     token: vscode.CancellationToken,
   ) => {
     // Logging
-    console.log({
+    console.log("Handler: ", {
       command: request.command,
       prompt: request.prompt,
     });
@@ -69,23 +70,9 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
     // Send the prompt to Jarvis
     await postJarvisPrompt(chatId, request.prompt);
 
+    // Stream response to the chat window
     const responseStream = await getJarvisResponseStream(chatId);
-
-    for await (const chunk of responseStream) {
-      // Construct the stream chunk JSON object
-      // TODO: this is hacky, need to fix in the future
-      const [eventPart, dataPart] = chunk.toString().split(/event:\s*|\s*data:\s*/).filter(Boolean);
-      const parsedData = JSON.parse(dataPart);
-
-      const data = {
-        event: eventPart.trim(),
-        data: parsedData,
-      };
-
-      if (data.event === "data") {
-        stream.markdown(data.data.answer);
-      }
-    }
+    await streamJarvisResponse(stream, responseStream);
 
     return;
 
@@ -194,10 +181,23 @@ function optionsHandler(stream: vscode.ChatResponseStream) {
   }
 }
 
-/**
- * 
- * @returns a unique chat ID for the Jarvis chat session
- */
-export function getChatId(): string {
-  return "local_" + crypto.randomUUID();
+async function streamJarvisResponse(
+  stream: vscode.ChatResponseStream,
+  responseStream: Readable,
+) {
+  for await (const chunk of responseStream) {
+    // Construct the stream chunk JSON object
+    // TODO: this is hacky, need to fix in the future
+    const [eventPart, dataPart] = chunk.toString().split(/event:\s*|\s*data:\s*/).filter(Boolean);
+    const parsedData = JSON.parse(dataPart);
+
+    const data = {
+      event: eventPart.trim(),
+      data: parsedData,
+    };
+
+    if (data.event === "data") {
+      stream.markdown(data.data.answer);
+    }
+  }
 }

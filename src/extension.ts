@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { registerJarvisParticipant, getChatId } from "./jarvis";
+import { registerJarvisParticipant } from "./jarvis";
 
 export function activate(context: vscode.ExtensionContext) {
   const chatId = getChatId();
@@ -9,4 +9,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {
   console.log("extension Jarvis is now deactivated...");
+}
+
+export function getChatId(): string {
+  return "local_" + crypto.randomUUID();
 }
