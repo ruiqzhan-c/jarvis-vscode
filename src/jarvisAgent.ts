@@ -12,42 +12,82 @@ interface JarvisChatResponse {
   answer: string;
 }
 
-export async function postJarvisPrompt(chatId: string, prompt: string) {
-  await axios.post(JARVIS_URL + "/submit_question", {
+/**
+ * Posts a prompt to the Jarvis API. Await should be used to ensure the request
+ * is sent before proceeding.
+ * 
+ * @param chatId chat identifier
+ * @param prompt user prompt
+ */
+export async function postJarvisPrompt(chatId: string, prompt: string): Promise<boolean> {
+  console.log(
+    "Posting prompt: ", prompt.length > 50
+      ? prompt.substring(0, 20) + "..."
+      : prompt
+  );
+
+  return await axios.post(JARVIS_URL + "/submit_question", {
     chat_id: chatId,
     question: prompt,
   }, {
-    headers: {
-      "USER_EMAIL": USER_EMAIL,
-    }
+    headers: { "USER_EMAIL": USER_EMAIL }
   }).then((res) => {
-    console.log(res.data);
-  }).finally(() => {
-    console.log("Posted prompt: ", prompt);
+    console.log({
+      status: res.status,
+      data: res.data,
+    });
+    return res.status === 200;
+  }).catch((err) => {
+    console.error("Error: ", err);
+    throw new Error("Failed to post Jarvis prompt");
   });
 }
 
+/**
+ * Retrieves the Jarvis chat response for a given chat ID.
+ * 
+ * @param chatId chat identifier
+ * @returns a promise that resolves to the Jarvis chat response
+ */
 export async function getJarvisResponse(chatId: string): Promise<JarvisChatResponse> {
+  console.log("Getting Jarvis response for chat ID: ", chatId);
+
   return await axios.get(JARVIS_URL + `/get_answer/${chatId}`, {
-    headers: {
-      "USER_EMAIL": USER_EMAIL,
-    }
+    headers: { "USER_EMAIL": USER_EMAIL }
   }).then((res) => {
+    if (res.status !== 200) {
+      throw new Error("Failed to get Jarvis response");
+    }
+
     console.log("Received response: ", res.data);
     return res.data;
+  }).catch((err) => {
+    console.error("Error: ", err);
+    throw new Error("Failed to get Jarvis response");
   });
 }
 
+/**
+ * Retrieves the Jarvis chat response as a stream for a given chat ID.
+ * 
+ * @param chatId chat identifier
+ * @returns a promise that resolves to a Readable stream of the Jarvis chat response
+ */
 export async function getJarvisResponseStream(chatId: string): Promise<Readable> {
-  const streamResponse = await axios.get(JARVIS_URL + `/get_answer_stream/${chatId}`, {
-    headers: {
-      "USER_EMAIL": USER_EMAIL,
-    },
+  console.log("Getting Jarvis response stream for chat ID: ", chatId);
+
+  return await axios.get(JARVIS_URL + `/get_answer_stream/${chatId}`, {
+    headers: { "USER_EMAIL": USER_EMAIL },
     responseType: "stream",
   }).then((res)  => {
-    return res.data as Readable;
-  });
+    if (res.status !== 200) {
+      throw new Error("Failed to get Jarvis response");
+    }
 
-  console.log("Received response: stream");
-  return streamResponse;
+    console.log("Received response: stream");
+    return res.data as Readable;
+  }).catch((err) => {
+    console.error("Error: ", err);
+    throw new Error("Failed to get Jarvis response stream");
+  });
 }
