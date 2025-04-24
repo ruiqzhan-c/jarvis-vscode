@@ -40,6 +40,10 @@
           {
             "name": "githubRepo",
             "description": "Create a new GitHub repo."
+          },
+          {
+            "name": "llmAccess",
+            "description": "Get LLM access."
           }
         ]
       }

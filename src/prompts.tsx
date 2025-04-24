@@ -41,11 +41,16 @@ export class CiscoPrompt extends PromptElement<PromptProps, void> {
   }
 }
 
-export const CISCO_PROMPT = 
-  "Give a very brief description of Cisco.";
+export enum prompts {
+  CISCO_PROMPT = 
+    "Give a very brief description of Cisco.",
 
-export const OPTIONS_PROMPT =
-  "What can JARVIS do?";
+  OPTIONS_PROMPT =
+    "What can JARVIS do?",
 
-export const GITHUB_REPO_PROMPT =
-  "Create GitHub repo";
+  GITHUB_REPO_PROMPT =
+    "Create GitHub repo",
+
+  LLM_ACCESS_PROMPT =
+    "Get LLM Access",
+}

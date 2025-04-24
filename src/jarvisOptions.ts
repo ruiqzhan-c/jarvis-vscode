@@ -5,6 +5,7 @@ export enum options {
   JIRA = "jira",
   TRIAGE = "triage",
   GITHUB_REPO = "githubRepo",
+  LLM_ACCESS = "llmAccess",
 }
 
 // Map of options to their descriptions
@@ -14,4 +15,5 @@ export const optionsMap = new Map<string, string>([
   [options.JIRA, "Create a Jira ticket for me."],
   [options.TRIAGE, "Who is currently on-call?"],
   [options.GITHUB_REPO, "Create a new GitHub repo."],
+  [options.LLM_ACCESS, "Get LLM access."],
 ]);

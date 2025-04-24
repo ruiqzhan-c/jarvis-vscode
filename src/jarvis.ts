@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as dotenv from "dotenv";
 import { options, optionsMap } from "./jarvisOptions";
-import { CISCO_PROMPT, GITHUB_REPO_PROMPT, OPTIONS_PROMPT } from "./prompts";
+import { prompts } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
 import { postJarvisPrompt, getJarvisResponseStream } from "./jarvisAgent";
 import { Readable } from "stream";
@@ -44,12 +44,12 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
     switch (request.command) {
       // Provides a brief description of Cisco
       case options.CISCO:
-        prompt = CISCO_PROMPT;
+        prompt = prompts.CISCO_PROMPT;
         break;
 
       // Provides a list of available commands
       case options.OPTIONS:
-        prompt = OPTIONS_PROMPT;
+        prompt = prompts.OPTIONS_PROMPT;
         break;
 
       case options.JIRA: {
@@ -64,7 +64,12 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
 
       // Helps the user create a new GitHub repository
       case options.GITHUB_REPO:
-        prompt = GITHUB_REPO_PROMPT;
+        prompt = prompts.GITHUB_REPO_PROMPT;
+        break;
+
+      // Gets LLM access using Ostinato
+      case options.LLM_ACCESS:
+        prompt = prompts.LLM_ACCESS_PROMPT;
         break;
     }
 
