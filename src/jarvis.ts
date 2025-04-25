@@ -55,7 +55,7 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
         }
       }
 
-      prompt += request.prompt;
+      prompt += " " + request.prompt;
 
       // If Jarvis is @ed but no prompt is given, reply and do nothing
       if (prompt.length === 0) {

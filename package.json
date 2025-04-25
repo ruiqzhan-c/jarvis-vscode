@@ -18,12 +18,40 @@
         "id": "jarvis.jarvis",
         "name": "jarvis",
         "fullName": "Jarvis",
-        "description": "What would you like to do?",
+        "description": "Hello! What can I do for you?",
         "isSticky": true,
+        "disambiguation": [
+          {
+            "category": "platform_engineering",
+            "description": "The user wants to talk about platform engineering or needs help with their platform.",
+            "examples": [
+                "Can you create a new GitHub repo?",
+                "Get RAG Pipeline keys.",
+                "I need help with my platform."
+            ]
+          },
+          {
+            "category": "cisco",
+            "description": "The user wants to talk about Cisco or needs help with their Cisco account.",
+            "examples": [
+                "Tell me about Cisco.",
+                "I need help with my Cisco account."
+            ]
+          }
+        ],
         "commands": [
           {
             "name": "cisco",
-            "description": "Tell me about Cisco."
+            "description": "Tell me about Cisco.",
+            "disambiguation": [
+              {
+                "category": "cisco_info",
+                "description": "The user wants to talk about Cisco. They want a general overview about the company.",
+                "examples": [
+                    "Tell me about Cisco."
+                ]
+              }
+            ]
           },
           {
             "name": "options",

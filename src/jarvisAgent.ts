@@ -20,11 +20,9 @@ interface JarvisChatResponse {
  * @param prompt user prompt
  */
 export async function postJarvisPrompt(chatId: string, prompt: string): Promise<boolean> {
-  console.log(
-    "Posting prompt: ", prompt.length > 50
-      ? prompt.substring(0, 20) + "..."
-      : prompt
-  );
+  console.log("Posting prompt: ", {
+    prompt: prompt,
+  });
 
   return await axios.post(JARVIS_URL + "/submit_question", {
     chat_id: chatId,
