@@ -44,6 +44,14 @@
           {
             "name": "llmAccess",
             "description": "Get LLM access."
+          },
+          {
+            "name": "questionDocs",
+            "description": "Ask a question about the platform docs."
+          },
+          {
+            "name": "ragKeys",
+            "description": "Get RAG Pipeline keys."
           }
         ]
       }

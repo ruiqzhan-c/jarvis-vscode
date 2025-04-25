@@ -8,6 +8,8 @@ export enum options {
   TRIAGE = "triage",
   GITHUB_REPO = "githubRepo",
   LLM_ACCESS = "llmAccess",
+  QUESTION_DOCS = "questionDocs",
+  RAG_KEYS = "ragKeys",
 }
 
 // Map of options to their prompts
@@ -18,4 +20,6 @@ export const optionsPrompts = new Map<string, string>([
   [options.TRIAGE, prompts.TRIAGE_PROMPT],
   [options.GITHUB_REPO, prompts.GITHUB_REPO_PROMPT],
   [options.LLM_ACCESS, prompts.LLM_ACCESS_PROMPT],
+  [options.QUESTION_DOCS, prompts.QUESTION_DOCS_PROMPT],
+  [options.RAG_KEYS, prompts.RAG_KEYS_PROMPT],
 ]);

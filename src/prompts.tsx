@@ -59,4 +59,10 @@ export const prompts = {
 
   TRIAGE_PROMPT:
     "",
+
+  QUESTION_DOCS_PROMPT:
+    "Question about Platform Docs",
+
+  RAG_KEYS_PROMPT:
+    "Get RAG Pipeline Keys",
 };
