@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as dotenv from "dotenv";
-import { options, optionsMap } from "./jarvisOptions";
+import { options, optionsPrompts } from "./jarvisOptions";
 import { prompts } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
 import { postJarvisPrompt, getJarvisResponseStream } from "./jarvisAgent";
@@ -10,11 +10,12 @@ dotenv.config();
 
 const PARTICIPANT_ID = "jarvis.jarvis";
 
-// interface JarvisChatResult extends vscode.ChatResult {
-//   metadata: {
-//     command: string;
-//   };
-// }
+interface IJarvisChatResult extends vscode.ChatResult {
+  metadata: {
+    success: boolean;
+    command?: string;
+  };
+}
 
 /**
  * Registers the Jarvis chat participant with the given context.
@@ -28,7 +29,7 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
     _context: vscode.ChatContext,
     stream: vscode.ChatResponseStream,
     _token: vscode.CancellationToken,
-  ) => {
+  ): Promise<IJarvisChatResult> => {
     try {
       // Progress message to chat window
       stream.progress("Jarvis is thinking...");
@@ -39,20 +40,10 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
         prompt: request.prompt,
       });
 
-      let prompt = request.prompt;
+      let prompt = request.command ? optionsPrompts.get(request.command)! : "";
 
       // Check if the request is a command and handle it accordingly
       switch (request.command) {
-        // Provides a brief description of Cisco
-        case options.CISCO:
-          prompt = prompts.CISCO_PROMPT;
-          break;
-
-        // Provides a list of available commands
-        case options.OPTIONS:
-          prompt = prompts.OPTIONS_PROMPT;
-          break;
-
         case options.JIRA: {
           console.error("NOT IMPLEMENTED: jira");
           break;
@@ -62,30 +53,28 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
           console.error("NOT IMPLEMENTED: triage");
           break;
         }
-
-        // Helps the user create a new GitHub repository
-        case options.GITHUB_REPO:
-          prompt = prompts.GITHUB_REPO_PROMPT;
-          break;
-
-        // Gets LLM access using Ostinato
-        case options.LLM_ACCESS:
-          prompt = prompts.LLM_ACCESS_PROMPT;
-          break;
       }
+
+      prompt += request.prompt;
 
       // If Jarvis is @ed but no prompt is given, reply and do nothing
       if (prompt.length === 0) {
         stream.markdown("Please enter a prompt.");
-        return;
+        return { metadata: { success: false } };
       }
 
       // Send the prompt to Jarvis
-      await postJarvisPrompt(chatId, prompt);
+      const success = await postJarvisPrompt(chatId, prompt);
+
+      if (!success) {
+        throw new Error("Failed to post Jarvis prompt");
+      }
 
       // Stream response to the chat window
       const responseStream = await getJarvisResponseStream(chatId);
       await streamJarvisResponse(stream, responseStream);
+
+      return { metadata: { success: true, command: request.command } };
     } catch (error) {
       console.trace(error);
       throw new Error("Jarvis is not available at the moment.");
@@ -94,44 +83,32 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
 
   // Register the Jarvis chat participant
   const jarvis = vscode.chat.createChatParticipant(PARTICIPANT_ID, handler);
-  jarvis.iconPath = vscode.Uri.joinPath(context.extensionUri, "icon.webp");
-  
+  jarvis.iconPath = vscode.Uri.joinPath(context.extensionUri, "jarvis.png");
+  jarvis.followupProvider = {
+    provideFollowups(
+      _result: IJarvisChatResult,
+      _context: vscode.ChatContext,
+      _token: vscode.CancellationToken,
+    ) {
+      if (!_result.metadata.success) {
+        return [];
+      };
+
+      if (_result.metadata.command === options.OPTIONS) {
+        // TODO: replace with actual prompts
+        return [
+          {
+            prompt: "PLACEHOLDER",
+            label: vscode.l10n.t("Get LLM access"),
+          } satisfies vscode.ChatFollowup,
+        ];
+      }
+    },
+  };
+
   context.subscriptions.push(jarvis);
 
-  // jarvis.followupProvider = {
-  //   provideFollowups(
-  //     _result: JarvisChatResult,
-  //     _context: vscode.ChatContext,
-  //     _token: vscode.CancellationToken,
-  //   ) {
-  //     if (_result.metadata!.command === "options") {
-  //       return [
-  //         {
-  //           prompt: "let us play",
-  //           label: vscode.l10n.t("Play with the cat"),
-  //         } satisfies vscode.ChatFollowup,
-  //       ];
-  //     }
-  //   },
-  // };
-
   console.log("participant Jarvis has been registered...");
-}
-
-/**
- * Streams a list of available commands to the chat window.
- * 
- * @param stream vscode chat response stream
- */
-function optionsHandler(stream: vscode.ChatResponseStream) {
-  stream.markdown("Here are some of the things I can do for you:\n");
-  for (const [key, value] of optionsMap) {
-    stream.markdown(`- **${key}**: ${value}\n`);
-    // stream.button({
-    //   title: `Run ${key}`,
-    //   command: "jarvis.run",
-    // })
-  }
 }
 
 async function streamJarvisResponse(
