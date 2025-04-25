@@ -40,3 +40,29 @@ export class CiscoPrompt extends PromptElement<PromptProps, void> {
     );
   }
 }
+
+export const prompts = {
+  CISCO_PROMPT: 
+    "Give a very brief description of Cisco.",
+
+  OPTIONS_PROMPT:
+    "What can JARVIS do?",
+
+  GITHUB_REPO_PROMPT:
+    "Create GitHub repo",
+
+  LLM_ACCESS_PROMPT:
+    "Get LLM Access",
+
+  JIRA_PROMPT:
+    "",
+
+  TRIAGE_PROMPT:
+    "",
+
+  QUESTION_DOCS_PROMPT:
+    "Question about Platform Docs",
+
+  RAG_KEYS_PROMPT:
+    "Get RAG Pipeline Keys",
+};

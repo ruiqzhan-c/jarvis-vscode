@@ -20,11 +20,9 @@ interface JarvisChatResponse {
  * @param prompt user prompt
  */
 export async function postJarvisPrompt(chatId: string, prompt: string): Promise<boolean> {
-  console.log(
-    "Posting prompt: ", prompt.length > 50
-      ? prompt.substring(0, 20) + "..."
-      : prompt
-  );
+  console.log("Posting prompt: ", {
+    prompt: prompt,
+  });
 
   return await axios.post(JARVIS_URL + "/submit_question", {
     chat_id: chatId,
@@ -32,13 +30,13 @@ export async function postJarvisPrompt(chatId: string, prompt: string): Promise<
   }, {
     headers: { "USER_EMAIL": USER_EMAIL }
   }).then((res) => {
-    console.log({
+    console.log("Posted:", {
       status: res.status,
       data: res.data,
     });
     return res.status === 200;
   }).catch((err) => {
-    console.error("Error: ", err);
+    console.error(err);
     throw new Error("Failed to post Jarvis prompt");
   });
 }
@@ -62,7 +60,7 @@ export async function getJarvisResponse(chatId: string): Promise<JarvisChatRespo
     console.log("Received response: ", res.data);
     return res.data;
   }).catch((err) => {
-    console.error("Error: ", err);
+    console.error(err);
     throw new Error("Failed to get Jarvis response");
   });
 }
@@ -81,13 +79,13 @@ export async function getJarvisResponseStream(chatId: string): Promise<Readable>
     responseType: "stream",
   }).then((res)  => {
     if (res.status !== 200) {
-      throw new Error("Failed to get Jarvis response");
+      throw new Error("Failed to get Jarvis response stream");
     }
 
     console.log("Received response: stream");
     return res.data as Readable;
   }).catch((err) => {
-    console.error("Error: ", err);
+    console.error(err);
     throw new Error("Failed to get Jarvis response stream");
   });
 }
