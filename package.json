@@ -55,7 +55,17 @@
           },
           {
             "name": "options",
-            "description": "What can you do?"
+            "description": "What can you do?",
+            "disambiguation": [
+              {
+                "category": "jarvis_options",
+                "description": "The user wants to know what options are available.",
+                "examples": [
+                    "What can you do?",
+                    "What options are available?"
+                ]
+              }
+            ]
           },
           {
             "name": "jira",
@@ -63,23 +73,73 @@
           },
           {
             "name": "triage",
-            "description": "Check who is currently on duty."
+            "description": "Check who is currently on duty.",
+            "disambiguation": [
+              {
+                "category": "triage_info",
+                "description": "The user wants to know who is currently on duty.",
+                "examples": [
+                    "Who is currently on duty?",
+                    "Check who is on duty."
+                ]
+              }
+            ]
           },
           {
             "name": "githubRepo",
-            "description": "Create a new GitHub repo."
+            "description": "Create a new GitHub repo.",
+            "disambiguation": [
+              {
+                "category": "github_repo",
+                "description": "The user wants to create a new GitHub repo.",
+                "examples": [
+                    "Create a new GitHub repo.",
+                    "I need a new GitHub repo."
+                ]
+              }
+            ]
           },
           {
             "name": "llmAccess",
-            "description": "Get LLM access."
+            "description": "Get LLM access.",
+            "disambiguation": [
+              {
+                "category": "llm_access",
+                "description": "The user wants to get LLM access.",
+                "examples": [
+                    "I need a new LLM key.",
+                    "Get me a new LLM key.",
+                    "I need LLM access."
+                ]
+              }
+            ]
           },
           {
             "name": "questionDocs",
-            "description": "Ask a question about the platform docs."
+            "description": "Ask a question about the platform docs.",
+            "disambiguation": [
+              {
+                "category": "docs_question",
+                "description": "The user wants to ask a question about the platform docs.",
+                "examples": [
+                    "I have a question about the platform docs."
+                ]
+              }
+            ]
           },
           {
             "name": "ragKeys",
-            "description": "Get RAG Pipeline keys."
+            "description": "Get RAG Pipeline keys.",
+            "disambiguation": [
+              {
+                "category": "rag_keys",
+                "description": "The user wants to get RAG Pipeline keys.",
+                "examples": [
+                    "Get RAG Pipeline keys.",
+                    "I need RAG Pipeline keys."
+                ]
+              }
+            ]
           }
         ]
       }
