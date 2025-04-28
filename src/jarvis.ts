@@ -95,11 +95,16 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
       };
 
       if (_result.metadata.command === options.OPTIONS) {
-        // TODO: replace with actual prompts
         return [
           {
-            prompt: "PLACEHOLDER",
+            prompt: "Get LLM access",
+            command: options.LLM_ACCESS,
             label: vscode.l10n.t("Get LLM access"),
+          } satisfies vscode.ChatFollowup,
+          {
+            prompt: "Create GitHub repo",
+            command: options.GITHUB_REPO,
+            label: vscode.l10n.t("Create GitHub repo"),
           } satisfies vscode.ChatFollowup,
         ];
       }
