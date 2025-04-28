@@ -1,12 +1,14 @@
 import * as vscode from "vscode";
-import { registerJarvisParticipant } from "./jarvis";
-
-const HEALTH_CHECK_COMMAND = "jarvis.healthCheck";
+import { Jarvis } from "./jarvis";
 
 export function activate(context: vscode.ExtensionContext) {
-  vscode.commands.executeCommand(HEALTH_CHECK_COMMAND);
+  const jarvis = new Jarvis();
+
+  vscode.commands.executeCommand(jarvis.HEALTH_CHECK_COMMAND);
+
   const chatId = getChatId();
-  registerJarvisParticipant(context, chatId);
+  jarvis.registerChatParticipant(context, chatId);
+
   console.log("extension Jarvis is now activated...");
 }
 
