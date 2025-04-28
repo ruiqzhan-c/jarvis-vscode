@@ -55,14 +55,14 @@
           },
           {
             "name": "options",
-            "description": "What can you do?",
+            "description": "What can Jarvis do?",
             "disambiguation": [
               {
                 "category": "jarvis_options",
                 "description": "The user wants to know what options are available.",
                 "examples": [
-                    "What can you do?",
-                    "What options are available?"
+                    "What can jarvis do?",
+                    "What options are available to Jarvis?"
                 ]
               }
             ]
