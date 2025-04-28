@@ -3,12 +3,13 @@ import * as dotenv from "dotenv";
 import { options, optionsPrompts } from "./jarvisOptions";
 import { prompts } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
-import { postJarvisPrompt, getJarvisResponseStream } from "./jarvisAgent";
+import { postJarvisPrompt, getJarvisResponseStream, getJarvisConnectionHealth } from "./jarvisAgent";
 import { Readable } from "stream";
 
 dotenv.config();
 
 const PARTICIPANT_ID = "jarvis.jarvis";
+const HEALTH_CHECK_COMMAND = "jarvis.healthCheck";
 
 interface IJarvisChatResult extends vscode.ChatResult {
   metadata: {
@@ -106,9 +107,33 @@ export function registerJarvisParticipant(context: vscode.ExtensionContext, chat
     },
   };
 
+  const jarvisHealthCheck = vscode.commands.registerCommand(HEALTH_CHECK_COMMAND, healthHandler);
+
   context.subscriptions.push(jarvis);
+  context.subscriptions.push(jarvisHealthCheck);
 
   console.log("participant Jarvis has been registered...");
+}
+
+/**
+ * Handler for the health check command. Retrieves the health status of Jarvis and displays
+ * a message to the user using the VSCode API's information messages.
+ */
+async function healthHandler() {
+  const health = await getJarvisConnectionHealth();
+  if (!health) {
+    const selection = await vscode.window.showErrorMessage(
+      "Unable to connect to Jarvis. Please check your connection.",
+      "Dismiss",
+      "Retry",
+    );
+
+    if (selection === "Retry") {
+      healthHandler();
+    }
+  } else {
+    vscode.window.showInformationMessage("Jarvis connected!");
+  }
 }
 
 async function streamJarvisResponse(
