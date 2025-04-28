@@ -1,12 +1,9 @@
 import * as vscode from "vscode";
-import * as dotenv from "dotenv";
 import { options, optionsPrompts } from "./jarvisOptions";
 import { prompts } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
 import { postJarvisPrompt, getJarvisResponseStream, getJarvisConnectionHealth } from "./jarvisAgent";
 import { Readable } from "stream";
-
-dotenv.config();
 
 interface IJarvisChatResult extends vscode.ChatResult {
   metadata: {
@@ -35,18 +32,17 @@ export class Jarvis {
       _token: vscode.CancellationToken,
     ): Promise<IJarvisChatResult> => {
       try {
-        // Progress message to chat window
         stream.progress("Jarvis is thinking...");
 
-        // Logging
         console.log("Handler: ", {
           command: request.command,
           prompt: request.prompt,
         });
 
+        // Initialise the prompt with command if given
         let prompt = request.command ? optionsPrompts.get(request.command)! : "";
 
-        // Check if the request is a command and handle it accordingly
+        // Handle commands accordingly if they have special cases
         switch (request.command) {
           case options.JIRA: {
             console.error("NOT IMPLEMENTED: jira");
@@ -67,7 +63,6 @@ export class Jarvis {
           return { metadata: { success: false } };
         }
 
-        // Send the prompt to Jarvis
         const success = await postJarvisPrompt(chatId, prompt);
 
         if (!success) {
@@ -148,6 +143,12 @@ export class Jarvis {
     }
   }
 
+  /**
+   * Streams the Jarvis API response to the chat window.
+   * 
+   * @param stream vscode chat response stream
+   * @param responseStream stream response from Jarvis API
+   */
   private async streamJarvisResponse(
     stream: vscode.ChatResponseStream,
     responseStream: Readable,
