@@ -89,3 +89,19 @@ export async function getJarvisResponseStream(chatId: string): Promise<Readable>
     throw new Error("Failed to get Jarvis response stream");
   });
 }
+
+/**
+ * 
+ * @returns true if successfully makes connection to Jarvis, false otherwise
+ */
+export async function getJarvisConnectionHealth(): Promise<boolean> {
+  return await axios.get(JARVIS_URL + "/healthz", {
+    timeout: 5000,
+  }).then((res) => {
+    console.log("Jarvis connection: ", res.data);
+    return res.status === 200;
+  }).catch((err) => {
+    console.error(err);
+    return false;
+  });
+}
