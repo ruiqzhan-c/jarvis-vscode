@@ -145,15 +145,15 @@ export class Jarvis {
     const health = await getJarvisConnectionHealth();
     let selection = undefined;
 
+    this.connectionStatus = !health;
+
     if (!health) {
-      this.connectionStatus = false;
       selection = await vscode.window.showErrorMessage(
         "Unable to connect to Jarvis. Please check your connection.",
         "Dismiss",
         "Retry",
       );
     } else {
-      this.connectionStatus = true;
       vscode.window.showInformationMessage("Jarvis connected!");
     }
 
