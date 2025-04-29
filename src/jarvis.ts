@@ -16,7 +16,18 @@ export class Jarvis {
   private readonly PARTICIPANT_ID = "jarvis.jarvis";
   private connectionStatus = false;
 
+  private readonly statusBarItem: vscode.StatusBarItem;
+  private chatParticipant?: vscode.ChatParticipant;
+
   public readonly HEALTH_CHECK_COMMAND = "jarvis.healthCheck";
+
+  constructor() {
+    // Status bar
+    this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
+    this.statusBarItem.command = this.HEALTH_CHECK_COMMAND;
+    this.statusBarItem.text = "Jarvis: $(loading~spin)";
+    this.statusBarItem.show();
+  }
 
   /**
    * Registers the Jarvis chat participant with the given context.
@@ -81,10 +92,11 @@ export class Jarvis {
     };
 
     // Register the Jarvis chat participant
-    const jarvis = vscode.chat.createChatParticipant(this.PARTICIPANT_ID, handler);
-    jarvis.iconPath = vscode.Uri.joinPath(context.extensionUri, "jarvis.png");
+    this.chatParticipant = vscode.chat.createChatParticipant(this.PARTICIPANT_ID, handler);
+    this.chatParticipant.iconPath = vscode.Uri.joinPath(context.extensionUri, "jarvis.png");
+    
 
-    jarvis.followupProvider = {
+    this.chatParticipant.followupProvider = {
       provideFollowups(
         _result: IJarvisChatResult,
         _context: vscode.ChatContext,
@@ -111,13 +123,16 @@ export class Jarvis {
       },
     };
 
+    // TODO: can try to create a custom event for refreshing the status bar item
     const jarvisHealthCheck = vscode.commands.registerCommand(
       this.HEALTH_CHECK_COMMAND,
-      this.healthHandler.bind(this),
+      this.healthHandler,
+      this,
     );
 
-    context.subscriptions.push(jarvis);
+    context.subscriptions.push(this.chatParticipant);
     context.subscriptions.push(jarvisHealthCheck);
+    context.subscriptions.push(this.statusBarItem);
 
     console.log("participant Jarvis has been registered...");
   }
@@ -128,18 +143,24 @@ export class Jarvis {
    */
   private async healthHandler() {
     const health = await getJarvisConnectionHealth();
+    let selection = undefined;
+
     if (!health) {
-      const selection = await vscode.window.showErrorMessage(
+      this.connectionStatus = false;
+      selection = await vscode.window.showErrorMessage(
         "Unable to connect to Jarvis. Please check your connection.",
         "Dismiss",
         "Retry",
       );
-
-      if (selection === "Retry") {
-        this.healthHandler();
-      }
     } else {
+      this.connectionStatus = true;
       vscode.window.showInformationMessage("Jarvis connected!");
+    }
+
+    this.statusBarItem.text = "Jarvis: " + (this.connectionStatus ? "connected" : "disconnected");
+
+    if (selection === "Retry") {
+      this.healthHandler();
     }
   }
 
