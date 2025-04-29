@@ -1,12 +1,9 @@
 import * as vscode from "vscode";
-import * as dotenv from "dotenv";
 import { options, optionsPrompts } from "./jarvisOptions";
 import { prompts } from "./prompts";
 import { renderPrompt } from "@vscode/prompt-tsx";
 import { postJarvisPrompt, getJarvisResponseStream, getJarvisConnectionHealth } from "./jarvisAgent";
 import { Readable } from "stream";
-
-dotenv.config();
 
 interface IJarvisChatResult extends vscode.ChatResult {
   metadata: {
@@ -19,7 +16,18 @@ export class Jarvis {
   private readonly PARTICIPANT_ID = "jarvis.jarvis";
   private connectionStatus = false;
 
+  private readonly statusBarItem: vscode.StatusBarItem;
+  private chatParticipant?: vscode.ChatParticipant;
+
   public readonly HEALTH_CHECK_COMMAND = "jarvis.healthCheck";
+
+  constructor() {
+    // Status bar
+    this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
+    this.statusBarItem.command = this.HEALTH_CHECK_COMMAND;
+    this.statusBarItem.text = "Jarvis: $(loading~spin)";
+    this.statusBarItem.show();
+  }
 
   /**
    * Registers the Jarvis chat participant with the given context.
@@ -35,18 +43,17 @@ export class Jarvis {
       _token: vscode.CancellationToken,
     ): Promise<IJarvisChatResult> => {
       try {
-        // Progress message to chat window
         stream.progress("Jarvis is thinking...");
 
-        // Logging
         console.log("Handler: ", {
           command: request.command,
           prompt: request.prompt,
         });
 
+        // Initialise the prompt with command if given
         let prompt = request.command ? optionsPrompts.get(request.command)! : "";
 
-        // Check if the request is a command and handle it accordingly
+        // Handle commands accordingly if they have special cases
         switch (request.command) {
           case options.JIRA: {
             console.error("NOT IMPLEMENTED: jira");
@@ -67,7 +74,6 @@ export class Jarvis {
           return { metadata: { success: false } };
         }
 
-        // Send the prompt to Jarvis
         const success = await postJarvisPrompt(chatId, prompt);
 
         if (!success) {
@@ -86,9 +92,11 @@ export class Jarvis {
     };
 
     // Register the Jarvis chat participant
-    const jarvis = vscode.chat.createChatParticipant(this.PARTICIPANT_ID, handler);
-    jarvis.iconPath = vscode.Uri.joinPath(context.extensionUri, "jarvis.png");
-    jarvis.followupProvider = {
+    this.chatParticipant = vscode.chat.createChatParticipant(this.PARTICIPANT_ID, handler);
+    this.chatParticipant.iconPath = vscode.Uri.joinPath(context.extensionUri, "jarvis.png");
+    
+
+    this.chatParticipant.followupProvider = {
       provideFollowups(
         _result: IJarvisChatResult,
         _context: vscode.ChatContext,
@@ -99,24 +107,32 @@ export class Jarvis {
         };
 
         if (_result.metadata.command === options.OPTIONS) {
-          // TODO: replace with actual prompts
           return [
             {
-              prompt: "PLACEHOLDER",
+              prompt: "Get LLM access",
+              command: options.LLM_ACCESS,
               label: vscode.l10n.t("Get LLM access"),
+            } satisfies vscode.ChatFollowup,
+            {
+              prompt: "Create GitHub repo",
+              command: options.GITHUB_REPO,
+              label: vscode.l10n.t("Create GitHub repo"),
             } satisfies vscode.ChatFollowup,
           ];
         }
       },
     };
 
+    // TODO: can try to create a custom event for refreshing the status bar item
     const jarvisHealthCheck = vscode.commands.registerCommand(
       this.HEALTH_CHECK_COMMAND,
-      this.healthHandler.bind(this),
+      this.healthHandler,
+      this,
     );
 
-    context.subscriptions.push(jarvis);
+    context.subscriptions.push(this.chatParticipant);
     context.subscriptions.push(jarvisHealthCheck);
+    context.subscriptions.push(this.statusBarItem);
 
     console.log("participant Jarvis has been registered...");
   }
@@ -127,21 +143,33 @@ export class Jarvis {
    */
   private async healthHandler() {
     const health = await getJarvisConnectionHealth();
+    let selection = undefined;
+
     if (!health) {
-      const selection = await vscode.window.showErrorMessage(
+      this.connectionStatus = false;
+      selection = await vscode.window.showErrorMessage(
         "Unable to connect to Jarvis. Please check your connection.",
         "Dismiss",
         "Retry",
       );
-
-      if (selection === "Retry") {
-        this.healthHandler();
-      }
     } else {
+      this.connectionStatus = true;
       vscode.window.showInformationMessage("Jarvis connected!");
+    }
+
+    this.statusBarItem.text = "Jarvis: " + (this.connectionStatus ? "connected" : "disconnected");
+
+    if (selection === "Retry") {
+      this.healthHandler();
     }
   }
 
+  /**
+   * Streams the Jarvis API response to the chat window.
+   * 
+   * @param stream vscode chat response stream
+   * @param responseStream stream response from Jarvis API
+   */
   private async streamJarvisResponse(
     stream: vscode.ChatResponseStream,
     responseStream: Readable,
