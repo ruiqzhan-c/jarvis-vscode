@@ -12,6 +12,14 @@ interface IJarvisChatResult extends vscode.ChatResult {
   };
 }
 
+// Interface for Jarvis response requesting user input storing both request and response
+interface IJarvisUserInput {
+  field_name: string;               // Name of requested field
+  field_description: string;        // Description provided by Jarvis
+  field_values: readonly string[];  // Value choices provided by Jarvis
+  userInput?: string;               // Initially undefined, will be set to the user input
+}
+
 export class Jarvis {
   private readonly PARTICIPANT_ID = "jarvis.jarvis";
   private connectionStatus = false;
@@ -80,9 +88,12 @@ export class Jarvis {
           throw new Error("Failed to post Jarvis prompt");
         }
 
-        // Stream response to the chat window
+        // Stream response to the chat window and get user input if needed
         const responseStream = await getJarvisResponseStream(chatId);
-        await this.streamJarvisResponse(stream, responseStream);
+        const userInputs = await this.streamJarvisResponse(stream, responseStream);
+
+        // TODO: handle user inputs
+        console.log("User inputs: ", userInputs);
 
         return { metadata: { success: true, command: request.command } };
       } catch (error) {
@@ -145,7 +156,7 @@ export class Jarvis {
     const health = await getJarvisConnectionHealth();
     let selection = undefined;
 
-    this.connectionStatus = !health;
+    this.connectionStatus = health;
 
     if (!health) {
       selection = await vscode.window.showErrorMessage(
@@ -173,7 +184,10 @@ export class Jarvis {
   private async streamJarvisResponse(
     stream: vscode.ChatResponseStream,
     responseStream: Readable,
-  ) {
+  ): Promise<IJarvisUserInput[]> {
+    // Keep track of any inputs given by the user
+    const userInputs = [];
+
     for await (const chunk of responseStream) {
       console.log("Chunk:\n", chunk.toString());
       // TODO: this is hacky, need to fix in the future
@@ -185,15 +199,31 @@ export class Jarvis {
         continue;
       }
 
-      const parsedData = JSON.parse(dataPart);
-
-      // Parsed chunk data
-      const data = {
-        event: parsedEvent,
-        data: parsedData,
-      };
+      const data = JSON.parse(dataPart);
       
-      stream.markdown(data.data.answer);
+      stream.markdown(data.answer);
+
+      // Take user inputs if requested by the bot
+      if (data.metadata.input_fields.length > 0) {
+        for (const inputField of data.metadata.input_fields) {
+          userInputs.push(await this.takeUserInputs(inputField));
+        }
+      }
     }
+
+    return userInputs;
+  }
+
+  private async takeUserInputs(inputField: IJarvisUserInput): Promise<IJarvisUserInput> {
+    const result = await vscode.window.showQuickPick(inputField.field_values, {
+      title: inputField.field_name,
+      placeHolder: inputField.field_description,
+      canPickMany: false,
+      ignoreFocusOut: true,
+    });
+
+    inputField.userInput = result;
+
+    return inputField;
   }
 }
