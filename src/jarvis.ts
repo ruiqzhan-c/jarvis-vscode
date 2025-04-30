@@ -12,6 +12,14 @@ interface IJarvisChatResult extends vscode.ChatResult {
   };
 }
 
+interface IJarvisChatResponse {
+  answer: string;
+  metadata: {
+    user_input: boolean;
+    input_fields: IJarvisUserInput[];
+  };
+}
+
 // Interface for Jarvis response requesting user input storing both request and response
 interface IJarvisUserInput {
   field_name: string;               // Name of requested field
@@ -199,12 +207,12 @@ export class Jarvis {
         continue;
       }
 
-      const data = JSON.parse(dataPart);
-      
+      const data: IJarvisChatResponse = JSON.parse(dataPart);
+
       stream.markdown(data.answer);
 
       // Take user inputs if requested by the bot
-      if (data.metadata.input_fields.length > 0) {
+      if (data.metadata.user_input) {
         for (const inputField of data.metadata.input_fields) {
           userInputs.push(await this.takeUserInputs(inputField));
         }
@@ -214,6 +222,12 @@ export class Jarvis {
     return userInputs;
   }
 
+  /**
+   * Opens a quick pick dialog to take user inputs for the given field.
+   * 
+   * @param inputField Jarvis input request, contains field name, description and values
+   * @returns augmented `inputField` with user input
+   */
   private async takeUserInputs(inputField: IJarvisUserInput): Promise<IJarvisUserInput> {
     const result = await vscode.window.showQuickPick(inputField.field_values, {
       title: inputField.field_name,
