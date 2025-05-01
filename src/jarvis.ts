@@ -32,6 +32,16 @@ interface IJarvisInputResponse {
   response?: string;
 }
 
+class CustomQuickPickItem implements vscode.QuickPickItem {
+  label: string;
+  custom: boolean;
+
+  constructor(label: string, custom: boolean) {
+    this.label = label;
+    this.custom = custom;
+  }
+}
+
 export class Jarvis {
   private readonly PARTICIPANT_ID = "jarvis.jarvis";
   private connectionStatus = false;
@@ -256,18 +266,25 @@ export class Jarvis {
     const disposables: vscode.Disposable[] = [];
   
     return new Promise<IJarvisInputResponse>((resolve, reject) => {
-      const quickPick = vscode.window.createQuickPick();
-      quickPick.items = inputField.field_values.map(label => ({ label }));
+      const quickPick = vscode.window.createQuickPick<CustomQuickPickItem>();
+      quickPick.items = inputField.field_values.map(label => ({ label: label, custom: false }));
       quickPick.title = inputField.field_name;
       quickPick.placeholder = inputField.field_description;
       quickPick.canSelectMany = false;
       quickPick.ignoreFocusOut = true;
 
       disposables.push(
+        quickPick.onDidChangeValue(value => {
+          quickPick.items = inputField.field_values.map(label => ({ label: label, custom: false })).concat([{label: "Custom input: " + value, custom: true}]);
+        }),
         quickPick.onDidChangeSelection(selection => {
-          console.log("Selection: ", selection);
+          let label = selection[0].label;
+          if (selection[0].custom) {
+            label = label.slice(14);
+          }
+
           quickPick.hide();
-          resolve({ field_name: inputField.field_name, response: selection[0].label });
+          resolve({ field_name: inputField.field_name, response: label });
         }),
         quickPick.onDidHide(() => {
           disposables.forEach(disposable => disposable.dispose());
