@@ -12,6 +12,36 @@ interface IJarvisChatResult extends vscode.ChatResult {
   };
 }
 
+interface IJarvisChatResponse {
+  answer: string;
+  metadata: {
+    user_input: boolean;
+    input_fields: IJarvisInputRequest[];
+  };
+}
+
+// Interface for Jarvis response requesting user input storing both request and response
+interface IJarvisInputRequest {
+  field_name: string;
+  field_description: string;
+  field_values: readonly string[];
+}
+
+interface IJarvisInputResponse {
+  field_name: string;
+  response?: string;
+}
+
+class CustomQuickPickItem implements vscode.QuickPickItem {
+  label: string;
+  custom: boolean;
+
+  constructor(label: string, custom: boolean) {
+    this.label = label;
+    this.custom = custom;
+  }
+}
+
 export class Jarvis {
   private readonly PARTICIPANT_ID = "jarvis.jarvis";
   private connectionStatus = false;
@@ -20,6 +50,7 @@ export class Jarvis {
   private chatParticipant?: vscode.ChatParticipant;
 
   public readonly HEALTH_CHECK_COMMAND = "jarvis.healthCheck";
+  public readonly REQUEST_INPUT_COMMAND = "jarvis.requestInput";
 
   constructor() {
     // Status bar
@@ -69,7 +100,7 @@ export class Jarvis {
         prompt += " " + request.prompt;
 
         // If Jarvis is @ed but no prompt is given, reply and do nothing
-        if (prompt.length === 0) {
+        if (prompt.trim().length === 0) {
           stream.markdown("Please enter a prompt.");
           return { metadata: { success: false } };
         }
@@ -80,7 +111,7 @@ export class Jarvis {
           throw new Error("Failed to post Jarvis prompt");
         }
 
-        // Stream response to the chat window
+        // Stream response to the chat window and get user input if needed
         const responseStream = await getJarvisResponseStream(chatId);
         await this.streamJarvisResponse(stream, responseStream);
 
@@ -94,7 +125,6 @@ export class Jarvis {
     // Register the Jarvis chat participant
     this.chatParticipant = vscode.chat.createChatParticipant(this.PARTICIPANT_ID, handler);
     this.chatParticipant.iconPath = vscode.Uri.joinPath(context.extensionUri, "jarvis.png");
-    
 
     this.chatParticipant.followupProvider = {
       provideFollowups(
@@ -130,9 +160,16 @@ export class Jarvis {
       this,
     );
 
+    const jarvisRequestInput = vscode.commands.registerCommand(
+      this.REQUEST_INPUT_COMMAND,
+      this.takeUserInputs,
+      this,
+    );
+
     context.subscriptions.push(this.chatParticipant);
-    context.subscriptions.push(jarvisHealthCheck);
     context.subscriptions.push(this.statusBarItem);
+    context.subscriptions.push(jarvisHealthCheck);
+    context.subscriptions.push(jarvisRequestInput);
 
     console.log("participant Jarvis has been registered...");
   }
@@ -145,15 +182,15 @@ export class Jarvis {
     const health = await getJarvisConnectionHealth();
     let selection = undefined;
 
+    this.connectionStatus = health;
+
     if (!health) {
-      this.connectionStatus = false;
       selection = await vscode.window.showErrorMessage(
         "Unable to connect to Jarvis. Please check your connection.",
         "Dismiss",
         "Retry",
       );
     } else {
-      this.connectionStatus = true;
       vscode.window.showInformationMessage("Jarvis connected!");
     }
 
@@ -185,15 +222,105 @@ export class Jarvis {
         continue;
       }
 
-      const parsedData = JSON.parse(dataPart);
+      const data: IJarvisChatResponse = JSON.parse(dataPart);
 
-      // Parsed chunk data
-      const data = {
-        event: parsedEvent,
-        data: parsedData,
-      };
-      
-      stream.markdown(data.data.answer);
+      stream.markdown(data.answer);
+
+      // Take user inputs if requested by the bot
+      if (data.metadata.user_input) {
+        stream.button({
+          title: "Submit details",
+          command: this.REQUEST_INPUT_COMMAND,
+          arguments: [data.metadata.input_fields],
+        });
+      }
     }
+  }
+
+  /**
+   * Opens a quick pick dialog to take user inputs for the given fields.
+   * 
+   * @param inputFields Jarvis input request, contains field name, description and values
+   */
+  private async takeUserInputs(inputFields: IJarvisInputRequest[]) {
+    const augmentedInputs: IJarvisInputResponse[] = [];
+
+    if (inputFields.length === 1) {
+      const result = await this.takeUserInputText(inputFields[0]);
+      augmentedInputs.push(result);
+    } else {
+      for (const inputField of inputFields) {
+        const result = await this.takeUserInputSelection(inputField);
+        augmentedInputs.push(result);
+      }
+    }
+
+    vscode.commands.executeCommand("workbench.action.chat.open", {
+      query: "@jarvis " + JSON.stringify(augmentedInputs),
+    });
+  }
+
+  /**
+   * Shows a custom quick pick dialog to take user inputs for the given fields.
+   * 
+   * @param inputField Jarvis input request, contains field name, description and values
+   * @return Promise with the user input response
+   */
+  private async takeUserInputSelection(inputField: IJarvisInputRequest): Promise<IJarvisInputResponse> {
+    const disposables: vscode.Disposable[] = [];
+  
+    return new Promise<IJarvisInputResponse>((resolve, reject) => {
+      const quickPick = vscode.window.createQuickPick<CustomQuickPickItem>();
+      quickPick.items = inputField.field_values.map(label => ({ label: label, custom: false }));
+      quickPick.title = inputField.field_name;
+      quickPick.placeholder = inputField.field_description;
+      quickPick.canSelectMany = false;
+      quickPick.ignoreFocusOut = true;
+
+      disposables.push(
+        quickPick.onDidChangeValue(value => {
+          quickPick.items = inputField.field_values.map(label => ({ label: label, custom: false })).concat([{label: "Custom input: " + value, custom: true}]);
+        }),
+        quickPick.onDidChangeSelection(selection => {
+          let label = selection[0].label;
+          if (selection[0].custom) {
+            label = label.slice(14);
+          }
+
+          quickPick.hide();
+          resolve({ field_name: inputField.field_name, response: label });
+        }),
+        quickPick.onDidHide(() => {
+          disposables.forEach(disposable => disposable.dispose());
+        })
+      );
+
+      quickPick.show();
+    });
+  }
+
+  private async takeUserInputText(inputField: IJarvisInputRequest): Promise<IJarvisInputResponse> {
+    const disposables: vscode.Disposable[] = [];
+
+    return new Promise<IJarvisInputResponse>((resolve, reject) => {
+      const inputBox = vscode.window.createInputBox();
+      inputBox.title = inputField.field_name;
+      inputBox.prompt = inputField.field_description;
+      inputBox.placeholder = "Enter your input here";
+      inputBox.ignoreFocusOut = true;
+      
+      disposables.push(
+        inputBox.onDidAccept(() => {
+          const input = inputBox.value;
+          inputBox.hide();
+          resolve({ field_name: inputField.field_name, response: input });
+        }),
+        inputBox.onDidHide(() => {
+          disposables.forEach(disposable => disposable.dispose());
+        })
+      );
+      
+      inputBox.show();
+    });
   }
 }
