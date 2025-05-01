@@ -245,10 +245,14 @@ export class Jarvis {
   private async takeUserInputs(inputFields: IJarvisInputRequest[]) {
     const augmentedInputs: IJarvisInputResponse[] = [];
 
-    for (const inputField of inputFields) {
-      const result = await this.takeUserInput(inputField);
-
+    if (inputFields.length === 1) {
+      const result = await this.takeUserInputText(inputFields[0]);
       augmentedInputs.push(result);
+    } else {
+      for (const inputField of inputFields) {
+        const result = await this.takeUserInputSelection(inputField);
+        augmentedInputs.push(result);
+      }
     }
 
     vscode.commands.executeCommand("workbench.action.chat.open", {
@@ -262,7 +266,7 @@ export class Jarvis {
    * @param inputField Jarvis input request, contains field name, description and values
    * @return Promise with the user input response
    */
-  private async takeUserInput(inputField: IJarvisInputRequest): Promise<IJarvisInputResponse> {
+  private async takeUserInputSelection(inputField: IJarvisInputRequest): Promise<IJarvisInputResponse> {
     const disposables: vscode.Disposable[] = [];
   
     return new Promise<IJarvisInputResponse>((resolve, reject) => {
@@ -292,6 +296,31 @@ export class Jarvis {
       );
 
       quickPick.show();
+    });
+  }
+
+  private async takeUserInputText(inputField: IJarvisInputRequest): Promise<IJarvisInputResponse> {
+    const disposables: vscode.Disposable[] = [];
+
+    return new Promise<IJarvisInputResponse>((resolve, reject) => {
+      const inputBox = vscode.window.createInputBox();
+      inputBox.title = inputField.field_name;
+      inputBox.prompt = inputField.field_description;
+      inputBox.placeholder = "Enter your input here";
+      inputBox.ignoreFocusOut = true;
+      
+      disposables.push(
+        inputBox.onDidAccept(() => {
+          const input = inputBox.value;
+          inputBox.hide();
+          resolve({ field_name: inputField.field_name, response: input });
+        }),
+        inputBox.onDidHide(() => {
+          disposables.forEach(disposable => disposable.dispose());
+        })
+      );
+      
+      inputBox.show();
     });
   }
 }
