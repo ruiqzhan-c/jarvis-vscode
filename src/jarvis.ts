@@ -157,8 +157,8 @@ export class Jarvis {
     );
 
     context.subscriptions.push(this.chatParticipant);
-    context.subscriptions.push(jarvisHealthCheck);
     context.subscriptions.push(this.statusBarItem);
+    context.subscriptions.push(jarvisHealthCheck);
     context.subscriptions.push(jarvisRequestInput);
 
     console.log("participant Jarvis has been registered...");
@@ -236,18 +236,45 @@ export class Jarvis {
     const augmentedInputs: IJarvisInputResponse[] = [];
 
     for (const inputField of inputFields) {
-      const result = await vscode.window.showQuickPick(inputField.field_values, {
-        title: inputField.field_name,
-        placeHolder: inputField.field_description,
-        canPickMany: false,
-        ignoreFocusOut: true,
-      });
+      const result = await this.takeUserInput(inputField);
 
-      augmentedInputs.push({ field_name: inputField.field_name, response: result });
+      augmentedInputs.push(result);
     }
 
     vscode.commands.executeCommand("workbench.action.chat.open", {
       query: "@jarvis " + JSON.stringify(augmentedInputs),
+    });
+  }
+
+  /**
+   * Shows a custom quick pick dialog to take user inputs for the given fields.
+   * 
+   * @param inputField Jarvis input request, contains field name, description and values
+   * @return Promise with the user input response
+   */
+  private async takeUserInput(inputField: IJarvisInputRequest): Promise<IJarvisInputResponse> {
+    const disposables: vscode.Disposable[] = [];
+  
+    return new Promise<IJarvisInputResponse>((resolve, reject) => {
+      const quickPick = vscode.window.createQuickPick();
+      quickPick.items = inputField.field_values.map(label => ({ label }));
+      quickPick.title = inputField.field_name;
+      quickPick.placeholder = inputField.field_description;
+      quickPick.canSelectMany = false;
+      quickPick.ignoreFocusOut = true;
+
+      disposables.push(
+        quickPick.onDidChangeSelection(selection => {
+          console.log("Selection: ", selection);
+          quickPick.hide();
+          resolve({ field_name: inputField.field_name, response: selection[0].label });
+        }),
+        quickPick.onDidHide(() => {
+          disposables.forEach(disposable => disposable.dispose());
+        })
+      );
+
+      quickPick.show();
     });
   }
 }
