@@ -4,6 +4,28 @@ This is the VS Code extension for Jarvis, the multi-agent AI platform engineer d
 
 Try `@jarvis` in the Copilot window to get started.
 
+## Local Deployment
+
+### Dependencies
+
+First setup and run jarvis locally, following instructions [here](https://github.com/cisco-eti/jarvis-agent).
+
+If you run jarvis on a port other than `:8000` run the following in terminal:
+
+```
+export JARVIS_PORT=<8080>   # replace with jarvis port number
+```
+
+### Debugging
+
+To deploy the vscode extension in debug mode,
+
+```
+make build
+```
+
+then `F5` from the vscode window to begin debugging.
+
 ## Features
 
 Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
