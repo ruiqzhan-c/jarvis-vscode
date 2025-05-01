@@ -16,16 +16,20 @@ interface IJarvisChatResponse {
   answer: string;
   metadata: {
     user_input: boolean;
-    input_fields: IJarvisUserInput[];
+    input_fields: IJarvisInputRequest[];
   };
 }
 
 // Interface for Jarvis response requesting user input storing both request and response
-interface IJarvisUserInput {
-  field_name: string;               // Name of requested field
-  field_description: string;        // Description provided by Jarvis
-  field_values: readonly string[];  // Value choices provided by Jarvis
-  userInput?: string;               // Initially undefined, will be set to the user input
+interface IJarvisInputRequest {
+  field_name: string;
+  field_description: string;
+  field_values: readonly string[];
+}
+
+interface IJarvisInputResponse {
+  field_name: string;
+  response?: string;
 }
 
 export class Jarvis {
@@ -36,6 +40,7 @@ export class Jarvis {
   private chatParticipant?: vscode.ChatParticipant;
 
   public readonly HEALTH_CHECK_COMMAND = "jarvis.healthCheck";
+  public readonly REQUEST_INPUT_COMMAND = "jarvis.requestInput";
 
   constructor() {
     // Status bar
@@ -85,7 +90,7 @@ export class Jarvis {
         prompt += " " + request.prompt;
 
         // If Jarvis is @ed but no prompt is given, reply and do nothing
-        if (prompt.length === 0) {
+        if (prompt.trim().length === 0) {
           stream.markdown("Please enter a prompt.");
           return { metadata: { success: false } };
         }
@@ -98,10 +103,7 @@ export class Jarvis {
 
         // Stream response to the chat window and get user input if needed
         const responseStream = await getJarvisResponseStream(chatId);
-        const userInputs = await this.streamJarvisResponse(stream, responseStream);
-
-        // TODO: handle user inputs
-        console.log("User inputs: ", userInputs);
+        await this.streamJarvisResponse(stream, responseStream);
 
         return { metadata: { success: true, command: request.command } };
       } catch (error) {
@@ -113,7 +115,6 @@ export class Jarvis {
     // Register the Jarvis chat participant
     this.chatParticipant = vscode.chat.createChatParticipant(this.PARTICIPANT_ID, handler);
     this.chatParticipant.iconPath = vscode.Uri.joinPath(context.extensionUri, "jarvis.png");
-    
 
     this.chatParticipant.followupProvider = {
       provideFollowups(
@@ -149,9 +150,16 @@ export class Jarvis {
       this,
     );
 
+    const jarvisRequestInput = vscode.commands.registerCommand(
+      this.REQUEST_INPUT_COMMAND,
+      this.takeUserInputs,
+      this,
+    );
+
     context.subscriptions.push(this.chatParticipant);
     context.subscriptions.push(jarvisHealthCheck);
     context.subscriptions.push(this.statusBarItem);
+    context.subscriptions.push(jarvisRequestInput);
 
     console.log("participant Jarvis has been registered...");
   }
@@ -192,10 +200,7 @@ export class Jarvis {
   private async streamJarvisResponse(
     stream: vscode.ChatResponseStream,
     responseStream: Readable,
-  ): Promise<IJarvisUserInput[]> {
-    // Keep track of any inputs given by the user
-    const userInputs = [];
-
+  ) {
     for await (const chunk of responseStream) {
       console.log("Chunk:\n", chunk.toString());
       // TODO: this is hacky, need to fix in the future
@@ -213,31 +218,36 @@ export class Jarvis {
 
       // Take user inputs if requested by the bot
       if (data.metadata.user_input) {
-        for (const inputField of data.metadata.input_fields) {
-          userInputs.push(await this.takeUserInputs(inputField));
-        }
+        stream.button({
+          title: "Submit details",
+          command: this.REQUEST_INPUT_COMMAND,
+          arguments: [data.metadata.input_fields],
+        });
       }
     }
-
-    return userInputs;
   }
 
   /**
-   * Opens a quick pick dialog to take user inputs for the given field.
+   * Opens a quick pick dialog to take user inputs for the given fields.
    * 
-   * @param inputField Jarvis input request, contains field name, description and values
-   * @returns augmented `inputField` with user input
+   * @param inputFields Jarvis input request, contains field name, description and values
    */
-  private async takeUserInputs(inputField: IJarvisUserInput): Promise<IJarvisUserInput> {
-    const result = await vscode.window.showQuickPick(inputField.field_values, {
-      title: inputField.field_name,
-      placeHolder: inputField.field_description,
-      canPickMany: false,
-      ignoreFocusOut: true,
+  private async takeUserInputs(inputFields: IJarvisInputRequest[]) {
+    const augmentedInputs: IJarvisInputResponse[] = [];
+
+    for (const inputField of inputFields) {
+      const result = await vscode.window.showQuickPick(inputField.field_values, {
+        title: inputField.field_name,
+        placeHolder: inputField.field_description,
+        canPickMany: false,
+        ignoreFocusOut: true,
+      });
+
+      augmentedInputs.push({ field_name: inputField.field_name, response: result });
+    }
+
+    vscode.commands.executeCommand("workbench.action.chat.open", {
+      query: "@jarvis " + JSON.stringify(augmentedInputs),
     });
-
-    inputField.userInput = result;
-
-    return inputField;
   }
 }
